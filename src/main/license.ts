@@ -89,7 +89,6 @@ export function verifyLicenseKey(key: string, expectedMachineId: string): {
 function verifyEd25519(pubKey: Buffer, data: Buffer, sig: Buffer): boolean {
   try {
     // Use Node's built-in crypto.verify (available in Electron main process).
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const crypto = require('crypto')
     return crypto.verify('', data, pubKey, sig)
   } catch {

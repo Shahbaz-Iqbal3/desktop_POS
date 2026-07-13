@@ -4,6 +4,17 @@ import type { useToasts } from '../hooks/useToasts'
 
 type Toasts = ReturnType<typeof useToasts>
 
+function Toggle({ on, onClick }: { on: boolean; onClick: () => void }) {
+  return (
+    <button
+      className={`toggle ${on ? 'on' : ''}`}
+      onClick={onClick}
+      role="switch"
+      aria-checked={on}
+    />
+  )
+}
+
 export function SettingsScreen({
   toasts,
   onSettingsChanged
@@ -78,15 +89,6 @@ export function SettingsScreen({
     toasts.success('Feedback submitted. Thank you!')
     setFeedback('')
   }
-
-  const Toggle = ({ on, onClick }: { on: boolean; onClick: () => void }) => (
-    <button
-      className={`toggle ${on ? 'on' : ''}`}
-      onClick={onClick}
-      role="switch"
-      aria-checked={on}
-    />
-  )
 
   return (
     <div className="panel">

@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useBilling } from '../hooks/useBilling'
+import { useBarcodeScanner } from '../hooks/useBarcodeScanner'
 import { ShiftModal } from './ShiftModal'
 import type { useToasts } from '../hooks/useToasts'
 
@@ -10,6 +11,22 @@ export function BillingScreen({ toasts }: { toasts: Toasts }) {
   const { t } = useTranslation()
   const billing = useBilling(toasts)
   const [shiftModalOpen, setShiftModalOpen] = useState(false)
+
+  // Barcode scan handler — looks up product by barcode, adds to cart
+  const handleScan = useCallback(
+    (code: string) => {
+      const match = billing.products.find((p) => p.barcode === code)
+      if (match) {
+        billing.addToCart(match)
+        toasts.success(`Scanned: ${match.name}`)
+      } else {
+        toasts.error(`No product with barcode ${code}`)
+      }
+    },
+    [billing.products, billing.addToCart, toasts]
+  )
+
+  useBarcodeScanner(billing.settings.barcodeEnabled === 'true', handleScan)
 
   // If till reconciliation is on and no open shift, prompt to open one
   useEffect(() => {
@@ -43,6 +60,25 @@ export function BillingScreen({ toasts }: { toasts: Toasts }) {
             {c.name}
           </button>
         ))}
+        {billing.settings.barcodeEnabled === 'true' && (
+          <span
+            style={{
+              marginLeft: 'auto',
+              alignSelf: 'center',
+              fontSize: 11,
+              color: 'var(--success)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4
+            }}
+          >
+            <span style={{
+              width: 6, height: 6, borderRadius: '50%',
+              background: 'var(--success)', animation: 'pulse 2s infinite'
+            }} />
+            Scanner ready
+          </span>
+        )}
       </div>
 
       <div className="billing-panels">

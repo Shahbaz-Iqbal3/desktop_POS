@@ -44,7 +44,6 @@ export async function exportReport(input: {
   }
 
   // Lazy import xlsx (keeps startup fast)
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const XLSX = require('xlsx')
   const wb = XLSX.utils.book_new()
 
