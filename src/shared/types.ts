@@ -13,7 +13,16 @@ export type SaleItem = {
   price: number        // negotiated unit price (per piece or per meter)
   quantity: number      // pieces, or meters for thaan
   cutLength?: number    // for thaan: meters cut from the roll
+  discount?: number     // line-level discount percentage 0-100
   lineTotal: number
+}
+
+export type HeldCart = {
+  id: string
+  label: string
+  items: SaleItem[]
+  total: number
+  heldAt: string
 }
 
 export type Sale = {
@@ -109,11 +118,19 @@ export const IPC_CHANNELS = {
   GET_CATEGORIES: 'pos:get-categories',
   CREATE_CATEGORY: 'pos:create-category',
   CREATE_PRODUCT: 'pos:create-product',
+  UPDATE_PRODUCT: 'pos:update-product',
+  DELETE_PRODUCT: 'pos:delete-product',
 
   // Sales
   CREATE_SALE: 'pos:create-sale',
   GET_SALES: 'pos:get-sales',
   GET_LAST_SALE: 'pos:get-last-sale',
+
+  // Held carts (park/recall)
+  HOLD_CART: 'pos:hold-cart',
+  GET_HELD_CARTS: 'pos:get-held-carts',
+  RECALL_CART: 'pos:recall-cart',
+  DELETE_HELD_CART: 'pos:delete-held-cart',
 
   // Stock
   GET_STOCK_LEVEL: 'pos:get-stock-level',

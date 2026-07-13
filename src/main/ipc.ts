@@ -7,9 +7,15 @@ import {
   getCategories,
   createCategory,
   createProduct,
+  updateProduct,
+  deleteProduct,
   createSale,
   getSales,
   getLastSale,
+  holdCart,
+  getHeldCarts,
+  recallCart,
+  deleteHeldCart,
   getStockLevel,
   getStockLevels,
   addStockMovement,
@@ -35,11 +41,19 @@ export function registerDbIpc(): void {
     createCategory(name, sortOrder)
   )
   ipcMain.handle('pos:create-product', (_e, input) => createProduct(input))
+  ipcMain.handle('pos:update-product', (_e, id: string, patch) => updateProduct(id, patch))
+  ipcMain.handle('pos:delete-product', (_e, id: string) => deleteProduct(id))
 
   // Sales
   ipcMain.handle('pos:create-sale', (_e, input) => createSale(input))
   ipcMain.handle('pos:get-sales', (_e, limit = 100) => getSales(limit))
   ipcMain.handle('pos:get-last-sale', () => getLastSale())
+
+  // Held carts
+  ipcMain.handle('pos:hold-cart', (_e, label: string, items, total: number) => holdCart(label, items, total))
+  ipcMain.handle('pos:get-held-carts', () => getHeldCarts())
+  ipcMain.handle('pos:recall-cart', (_e, id: string) => recallCart(id))
+  ipcMain.handle('pos:delete-held-cart', (_e, id: string) => deleteHeldCart(id))
 
   // Stock
   ipcMain.handle('pos:get-stock-level', (_e, productId: string) => getStockLevel(productId))

@@ -14,7 +14,8 @@ import type {
   Branch,
   Till,
   Shift,
-  Setting
+  Setting,
+  HeldCart
 } from '@shared/types'
 
 let db: Database.Database
@@ -127,6 +128,14 @@ function createSchema(): void {
       rating INTEGER,
       created_at TEXT NOT NULL,
       synced INTEGER NOT NULL DEFAULT 0
+    );
+
+    CREATE TABLE IF NOT EXISTS held_carts (
+      id TEXT PRIMARY KEY,
+      label TEXT NOT NULL,
+      items TEXT NOT NULL,
+      total REAL NOT NULL,
+      held_at TEXT NOT NULL
     );
 
     CREATE INDEX IF NOT EXISTS idx_stock_movements_product ON stock_movements(product_id);
@@ -290,6 +299,61 @@ export function createProduct(input: {
     })
   }
   return getProducts().find((p) => p.id === id)!
+}
+
+export function updateProduct(id: string, patch: Partial<{
+  name: string
+  categoryId: string
+  unitType: 'piece' | 'thaan'
+  defaultPrice: number
+  barcode: string | null
+  sku: string | null
+  lowStockThreshold: number
+}>): void {
+  const fields: string[] = []
+  const values: unknown[] = []
+  if (patch.name !== undefined) { fields.push('name = ?'); values.push(patch.name) }
+  if (patch.categoryId !== undefined) { fields.push('category_id = ?'); values.push(patch.categoryId) }
+  if (patch.unitType !== undefined) { fields.push('unit_type = ?'); values.push(patch.unitType) }
+  if (patch.defaultPrice !== undefined) { fields.push('default_price = ?'); values.push(patch.defaultPrice) }
+  if (patch.barcode !== undefined) { fields.push('barcode = ?'); values.push(patch.barcode) }
+  if (patch.sku !== undefined) { fields.push('sku = ?'); values.push(patch.sku) }
+  if (patch.lowStockThreshold !== undefined) { fields.push('low_stock_threshold = ?'); values.push(patch.lowStockThreshold) }
+  if (fields.length === 0) return
+  values.push(id)
+  db.prepare(`UPDATE products SET ${fields.join(', ')} WHERE id = ?`).run(...values)
+}
+
+export function deleteProduct(id: string): void {
+  db.prepare('DELETE FROM products WHERE id = ?').run(id)
+}
+
+// ---------- Held Carts ----------
+
+export function holdCart(label: string, items: SaleItem[], total: number): HeldCart {
+  const id = uuidv4()
+  const now = new Date().toISOString()
+  db.prepare(
+    'INSERT INTO held_carts (id, label, items, total, held_at) VALUES (?, ?, ?, ?, ?)'
+  ).run(id, label, JSON.stringify(items), total, now)
+  return { id, label, items, total, heldAt: now }
+}
+
+export function getHeldCarts(): HeldCart[] {
+  const rows = db.prepare('SELECT * FROM held_carts ORDER BY held_at DESC').all() as Array<Omit<HeldCart, 'items'> & { items: string }>
+  return rows.map((r) => ({ ...r, items: JSON.parse(r.items) as SaleItem[] }))
+}
+
+export function recallCart(id: string): HeldCart | null {
+  const row = db.prepare('SELECT * FROM held_carts WHERE id = ?').get(id) as (Omit<HeldCart, 'items'> & { items: string }) | undefined
+  if (!row) return null
+  // Remove from held after recall
+  db.prepare('DELETE FROM held_carts WHERE id = ?').run(id)
+  return { ...row, items: JSON.parse(row.items) as SaleItem[] }
+}
+
+export function deleteHeldCart(id: string): void {
+  db.prepare('DELETE FROM held_carts WHERE id = ?').run(id)
 }
 
 // ---------- Stock ----------

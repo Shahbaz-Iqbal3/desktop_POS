@@ -11,11 +11,19 @@ const api = {
   createCategory: (name: string, sortOrder = 0) =>
     ipcRenderer.invoke(IPC_CHANNELS.CREATE_CATEGORY, name, sortOrder),
   createProduct: (input: unknown) => ipcRenderer.invoke(IPC_CHANNELS.CREATE_PRODUCT, input),
+  updateProduct: (id: string, patch: unknown) => ipcRenderer.invoke(IPC_CHANNELS.UPDATE_PRODUCT, id, patch),
+  deleteProduct: (id: string) => ipcRenderer.invoke(IPC_CHANNELS.DELETE_PRODUCT, id),
 
   // Sales
   createSale: (input: unknown) => ipcRenderer.invoke(IPC_CHANNELS.CREATE_SALE, input),
   getSales: (limit = 100) => ipcRenderer.invoke(IPC_CHANNELS.GET_SALES, limit),
   getLastSale: () => ipcRenderer.invoke(IPC_CHANNELS.GET_LAST_SALE),
+
+  // Held carts
+  holdCart: (label: string, items: unknown[], total: number) => ipcRenderer.invoke(IPC_CHANNELS.HOLD_CART, label, items, total),
+  getHeldCarts: () => ipcRenderer.invoke(IPC_CHANNELS.GET_HELD_CARTS),
+  recallCart: (id: string) => ipcRenderer.invoke(IPC_CHANNELS.RECALL_CART, id),
+  deleteHeldCart: (id: string) => ipcRenderer.invoke(IPC_CHANNELS.DELETE_HELD_CART, id),
 
   // Stock
   getStockLevel: (productId: string) => ipcRenderer.invoke(IPC_CHANNELS.GET_STOCK_LEVEL, productId),
