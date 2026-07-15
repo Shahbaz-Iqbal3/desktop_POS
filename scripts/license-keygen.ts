@@ -5,7 +5,9 @@
 // Outputs a license key string the user pastes into the Activate screen.
 //
 // ⚠️ Keep the private key safe. If it leaks, anyone can mint licenses.
-import { generateKeyPairSync, createSign, createHash } from 'crypto'
+import { generateKeyPairSync, createPrivateKey, sign, createHash } from 'crypto'
+import fs from 'fs'
+import path from 'path'
 
 const TIER_DAYS: Record<string, number> = {
   '1y': 365,
@@ -17,8 +19,6 @@ const TIER_DAYS: Record<string, number> = {
 // On first run, creates a new Ed25519 keypair and saves it to ./license-keys.json.
 // Add that file to .gitignore immediately.
 function loadOrCreateKeys(): { publicKey: string; privateKey: string } {
-  const fs = require('fs')
-  const path = require('path')
   const keyPath = path.resolve(process.cwd(), 'license-keys.json')
   if (fs.existsSync(keyPath)) {
     return JSON.parse(fs.readFileSync(keyPath, 'utf8'))
@@ -61,17 +61,12 @@ function main(): void {
   })
 
   const privateKeyDer = Buffer.from(keys.privateKey, 'base64')
-  // Use createSign for Ed25519 signing
-  const crypto = require('crypto')
-  const privateKeyObj = crypto.createPrivateKey({
+  const privateKeyObj = createPrivateKey({
     key: privateKeyDer,
     format: 'der',
     type: 'pkcs8'
   })
-  const signer = createSign('')
-  signer.update(Buffer.from(payload, 'utf8'))
-  signer.end()
-  const sig = signer.sign(privateKeyObj)
+  const sig = sign(null, Buffer.from(payload, 'utf8'), privateKeyObj)
 
   const payloadB64 = Buffer.from(payload, 'utf8').toString('base64url')
   const sigB64 = sig.toString('base64url')

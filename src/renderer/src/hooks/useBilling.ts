@@ -4,13 +4,23 @@ import type {
   Category,
   SaleItem,
   Sale,
-  PaymentMethod
+  PaymentMethod,
+  HeldCart
 } from '@shared/types'
+import { round, computeLineTotal } from '@shared/pure'
 
 export type CartLine = SaleItem & { stock: number }
 
 const DEFAULT_TILL_ID = 'till-1'
 const DEFAULT_BRANCH_ID = 'branch-default'
+
+function currentTillId(settings: Record<string, string>): string {
+  return settings.currentTillId || DEFAULT_TILL_ID
+}
+
+function currentBranchId(settings: Record<string, string>): string {
+  return settings.currentBranchId || DEFAULT_BRANCH_ID
+}
 
 export function useBilling(toasts: {
   success: (m: string) => void
@@ -26,6 +36,8 @@ export function useBilling(toasts: {
   const [submitting, setSubmitting] = useState(false)
   const [settings, setSettings] = useState<Record<string, string>>({})
   const [openShiftId, setOpenShiftId] = useState<string | null>(null)
+  const [shiftResolved, setShiftResolved] = useState(false)
+  const [heldCarts, setHeldCarts] = useState<HeldCart[]>([])
 
   const refreshProducts = useCallback(async () => {
     const list = await window.pos.getProducts(activeCategory ?? undefined)
@@ -48,13 +60,22 @@ export function useBilling(toasts: {
   }, [])
 
   const refreshOpenShift = useCallback(async () => {
-    if (settings.tillReconciliationEnabled !== 'true') {
-      setOpenShiftId(null)
-      return
+    // Keep `shiftResolved` false until the query actually completes.
+    // Otherwise `openShiftId` is still null while getOpenShift() is pending,
+    // and BillingScreen's effect would wrongly flash the open-shift dialog
+    // on every visit even when a shift is already open.
+    setShiftResolved(false)
+    try {
+      if (settings.tillReconciliationEnabled !== 'true') {
+        setOpenShiftId(null)
+        return
+      }
+      const shift = await window.pos.getOpenShift(currentTillId(settings))
+      setOpenShiftId(shift?.id ?? null)
+    } finally {
+      setShiftResolved(true)
     }
-    const shift = await window.pos.getOpenShift(DEFAULT_TILL_ID)
-    setOpenShiftId(shift?.id ?? null)
-  }, [settings.tillReconciliationEnabled])
+  }, [settings.tillReconciliationEnabled, settings.currentTillId])
 
   useEffect(() => {
     void refreshCategories()
@@ -97,7 +118,7 @@ export function useBilling(toasts: {
             ? {
                 ...l,
                 quantity: l.quantity + 1,
-                lineTotal: round((l.quantity + 1) * l.price)
+                lineTotal: computeLineTotal(l.price, l.quantity + 1, l.discount)
               }
             : l
         )
@@ -107,9 +128,10 @@ export function useBilling(toasts: {
         name: product.name,
         unitType: product.unitType,
         price: product.defaultPrice,
-        quantity: 1,
-        cutLength: product.unitType === 'thaan' ? 1 : undefined,
-        lineTotal: round(product.defaultPrice),
+          quantity: 1,
+          discount: 0,
+          cutLength: product.unitType === 'thaan' ? 1 : undefined,
+          lineTotal: computeLineTotal(product.defaultPrice, 1),
         stock
       }
       return [...prev, line]
@@ -121,7 +143,8 @@ export function useBilling(toasts: {
       prev.map((l) => {
         if (l.productId !== productId) return l
         const next = { ...l, ...patch }
-        next.lineTotal = round(next.quantity * next.price)
+        const disc = next.discount ?? 0
+        next.lineTotal = computeLineTotal(next.price, next.quantity, disc)
         return next
       })
     )
@@ -158,8 +181,8 @@ export function useBilling(toasts: {
       const total = subtotal
       const paid = paidAmount ? parseFloat(paidAmount) : total
       const sale = await window.pos.createSale({
-        branchId: DEFAULT_BRANCH_ID,
-        tillId: DEFAULT_TILL_ID,
+        branchId: currentBranchId(settings),
+        tillId: currentTillId(settings),
         shiftId: openShiftId,
         items,
         total,
@@ -195,6 +218,76 @@ export function useBilling(toasts: {
     else toasts.error(`Reprint failed: ${result.error}`)
   }, [toasts])
 
+  const refreshHeldCarts = useCallback(async () => {
+    try {
+      const carts = await window.pos.getHeldCarts()
+      setHeldCarts(carts)
+    } catch {
+      // ignore — held carts are best-effort
+    }
+  }, [])
+
+  const holdCurrentCart = useCallback(
+    async (label: string): Promise<boolean> => {
+      if (cart.length === 0) {
+        toasts.error('Cart is empty')
+        return false
+      }
+      try {
+        await window.pos.holdCart(label.trim(), cart, subtotal)
+        setCart([])
+        setPaidAmount('')
+        await refreshHeldCarts()
+        return true
+      } catch (err) {
+        toasts.error(err instanceof Error ? err.message : String(err))
+        return false
+      }
+    },
+    [cart, subtotal, toasts, refreshHeldCarts]
+  )
+
+  const recallHeldCart = useCallback(
+    async (id: string): Promise<boolean> => {
+      try {
+        const cart2 = await window.pos.recallCart(id)
+        if (!cart2) return false
+        const lines: CartLine[] = cart2.items.map((it: SaleItem) => {
+          const stock = stockMap[it.productId] ?? 0
+          const qty = Math.min(it.quantity, Math.max(1, stock))
+          return {
+            ...it,
+            quantity: stock > 0 ? qty : it.quantity,
+            stock
+          }
+        })
+        setCart(lines)
+        setHeldCarts((prev) => prev.filter((c) => c.id !== id))
+        return true
+      } catch (err) {
+        toasts.error(err instanceof Error ? err.message : String(err))
+        return false
+      }
+    },
+    [stockMap, toasts]
+  )
+
+  const deleteHeldCart = useCallback(
+    async (id: string) => {
+      try {
+        await window.pos.deleteHeldCart(id)
+        setHeldCarts((prev) => prev.filter((c) => c.id !== id))
+      } catch (err) {
+        toasts.error(err instanceof Error ? err.message : String(err))
+      }
+    },
+    [toasts]
+  )
+
+  useEffect(() => {
+    void refreshHeldCarts()
+  }, [refreshHeldCarts])
+
   return {
     products: visibleProducts,
     categories,
@@ -213,16 +306,18 @@ export function useBilling(toasts: {
     subtotal,
     confirmSale,
     reprintLast,
+    heldCarts,
+    refreshHeldCarts,
+    holdCurrentCart,
+    recallHeldCart,
+    deleteHeldCart,
     submitting,
     settings,
     openShiftId,
+    shiftResolved,
     refreshOpenShift,
     licenseBanner: getLicenseBanner(settings)
   }
-}
-
-function round(n: number): number {
-  return Math.round(n * 100) / 100
 }
 
 function getLicenseBanner(settings: Record<string, string>): { kind: 'none' | 'grace' | 'expired'; text: string } | null {

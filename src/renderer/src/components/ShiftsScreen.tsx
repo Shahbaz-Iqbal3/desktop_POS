@@ -1,7 +1,20 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Clock, History, Store, Wallet, CircleDot } from 'lucide-react'
 import type { useToasts } from '../hooks/useToasts'
+import type { Till } from '@shared/types'
 import { ShiftModal } from './ShiftModal'
+import {
+  Card, CardHeader, CardTitle, CardDescription, CardContent, CardAction
+} from '@/components/ui/card'
+import {
+  Table, TableHeader, TableBody, TableRow, TableHead, TableCell
+} from '@/components/ui/table'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue
+} from '@/components/ui/select'
 
 type Toasts = ReturnType<typeof useToasts>
 type Shift = {
@@ -25,14 +38,22 @@ export function ShiftsScreen({
   const [shifts, setShifts] = useState<Shift[]>([])
   const [openShift, setOpenShift] = useState<Shift | null>(null)
   const [modalMode, setModalMode] = useState<'open' | 'close' | null>(null)
+  const [settings, setSettings] = useState<Record<string, string>>({})
+  const [tills, setTills] = useState<Till[]>([])
+
+  const currentTill = settings.currentTillId || 'till-1'
 
   const refresh = async () => {
-    const [list, open] = await Promise.all([
+    const s = await window.pos.getSettings()
+    setSettings(s)
+    const [list, open, tl] = await Promise.all([
       window.pos.getShifts(),
-      window.pos.getOpenShift('till-1')
+      window.pos.getOpenShift(currentTill),
+      window.pos.getTills()
     ])
     setShifts(list)
     setOpenShift(open)
+    setTills(tl)
   }
 
   useEffect(() => {
@@ -40,83 +61,138 @@ export function ShiftsScreen({
   }, [])
 
   return (
-    <div className="panel">
-      <div className="panel-section">
-        <h3>📌 {t('app.shifts')}</h3>
-        {openShift ? (
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <div style={{ fontWeight: 600 }}>
-                {t('shift.open')}: {new Date(openShift.openedAt).toLocaleString()}
+    <div className="p-4 space-y-4">
+      <Card className="bg-slate-900/60 border-slate-800">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-slate-100">
+            <Clock className="w-4 h-4 text-teal-400" />
+            {t('app.shifts')}
+          </CardTitle>
+          <CardDescription className="text-slate-500">{t('shifts.activeTill')}</CardDescription>
+          <CardAction>
+            <Select
+              value={currentTill}
+              onValueChange={(v) => {
+                window.pos.setSetting('currentTillId', v)
+                void refresh()
+              }}
+            >
+              <SelectTrigger className="w-44 bg-slate-950 border-slate-700 text-sm">
+                <Store className="w-3.5 h-3.5 text-slate-500" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-slate-900 border-slate-800">
+                {tills.map((tl) => (
+                  <SelectItem key={tl.id} value={tl.id} className="text-slate-200 focus:bg-slate-800">
+                    {tl.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </CardAction>
+        </CardHeader>
+        <CardContent>
+          {openShift ? (
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-lg border border-slate-800 bg-slate-950/60 p-4">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 font-semibold text-slate-200">
+                  <Badge className="bg-emerald-500/15 text-emerald-300 border-emerald-500/30 gap-1">
+                    <CircleDot className="w-3 h-3" /> {t('shift.open')}
+                  </Badge>
+                </div>
+                <div className="text-sm text-slate-300">
+                  {new Date(openShift.openedAt).toLocaleString()}
+                </div>
+                <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                  <Wallet className="w-3.5 h-3.5" />
+                  {t('shift.openingCash')}: Rs {openShift.openingCash.toFixed(2)}
+                </div>
               </div>
-              <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>
-                {t('shift.openingCash')}: Rs {openShift.openingCash.toFixed(2)}
-              </div>
+              <Button
+                className="bg-teal-500 text-teal-950 hover:bg-teal-400 font-semibold shrink-0"
+                onClick={() => setModalMode('close')}
+              >
+                {t('shift.close')}
+              </Button>
             </div>
-            <button className="btn btn-primary" onClick={() => setModalMode('close')}>
-              {t('shift.close')}
-            </button>
-          </div>
-        ) : (
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <p style={{ color: 'var(--text-muted)' }}>{t('shift.noOpen')}</p>
-            <button className="btn btn-primary" onClick={() => setModalMode('open')}>
-              {t('shift.open')}
-            </button>
-          </div>
-        )}
-      </div>
+          ) : (
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-lg border border-slate-800 bg-slate-950/60 p-4">
+              <p className="text-sm text-slate-500">{t('shift.noOpen')}</p>
+              <Button
+                className="bg-teal-500 text-teal-950 hover:bg-teal-400 font-semibold shrink-0"
+                onClick={() => setModalMode('open')}
+              >
+                {t('shift.open')}
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
-      <div className="panel-section">
-        <h3>📋 History</h3>
-        {shifts.length === 0 ? (
-          <p style={{ color: 'var(--text-muted)' }}>No shifts recorded yet.</p>
-        ) : (
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-              <thead>
-                <tr style={{ textAlign: 'left', color: 'var(--text-muted)', borderBottom: '1px solid var(--border)' }}>
-                  <th style={{ padding: '8px' }}>Opened</th>
-                  <th style={{ padding: '8px' }}>Closed</th>
-                  <th style={{ padding: '8px' }}>Opening</th>
-                  <th style={{ padding: '8px' }}>Expected</th>
-                  <th style={{ padding: '8px' }}>Counted</th>
-                  <th style={{ padding: '8px' }}>Variance</th>
-                </tr>
-              </thead>
-              <tbody>
+      <Card className="bg-slate-900/60 border-slate-800">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-slate-100">
+            <History className="w-4 h-4 text-teal-400" />
+            History
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {shifts.length === 0 ? (
+            <p className="text-sm text-slate-500">No shifts recorded yet.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow className="border-slate-800 hover:bg-transparent">
+                  <TableHead className="text-slate-500">Opened</TableHead>
+                  <TableHead className="text-slate-500">Closed</TableHead>
+                  <TableHead className="text-slate-500">Opening</TableHead>
+                  <TableHead className="text-slate-500">Expected</TableHead>
+                  <TableHead className="text-slate-500">Counted</TableHead>
+                  <TableHead className="text-slate-500">Variance</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {shifts.map((s) => {
                   const variance = s.closingCash !== null && s.expectedCash !== null
                     ? s.closingCash - s.expectedCash
                     : null
                   return (
-                    <tr key={s.id} style={{ borderBottom: '1px solid var(--border)' }}>
-                      <td style={{ padding: '8px' }}>{new Date(s.openedAt).toLocaleString()}</td>
-                      <td style={{ padding: '8px' }}>
+                    <TableRow key={s.id} className="border-slate-800">
+                      <TableCell className="text-slate-300">{new Date(s.openedAt).toLocaleString()}</TableCell>
+                      <TableCell className="text-slate-300">
                         {s.closedAt ? new Date(s.closedAt).toLocaleString() : '—'}
-                      </td>
-                      <td style={{ padding: '8px' }}>Rs {s.openingCash.toFixed(2)}</td>
-                      <td style={{ padding: '8px' }}>
+                      </TableCell>
+                      <TableCell className="text-slate-300">Rs {s.openingCash.toFixed(2)}</TableCell>
+                      <TableCell className="text-slate-300">
                         {s.expectedCash !== null ? `Rs ${s.expectedCash.toFixed(2)}` : '—'}
-                      </td>
-                      <td style={{ padding: '8px' }}>
+                      </TableCell>
+                      <TableCell className="text-slate-300">
                         {s.closingCash !== null ? `Rs ${s.closingCash.toFixed(2)}` : '—'}
-                      </td>
-                      <td style={{ padding: '8px', color: variance === null ? 'inherit' : variance < 0 ? 'var(--danger)' : 'var(--success)' }}>
+                      </TableCell>
+                      <TableCell
+                        className={
+                          variance === null
+                            ? 'text-slate-300'
+                            : variance < 0
+                              ? 'text-red-400 font-medium'
+                              : 'text-emerald-400 font-medium'
+                        }
+                      >
                         {variance === null ? '—' : `Rs ${variance.toFixed(2)}`}
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   )
                 })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
 
       {modalMode && (
         <ShiftModal
           mode={modalMode}
+          tillId={currentTill}
           shiftId={openShift?.id}
           openingCash={openShift?.openingCash}
           expectedCash={openShift?.expectedCash ?? undefined}

@@ -18,6 +18,18 @@ const api = {
   createSale: (input: unknown) => ipcRenderer.invoke(IPC_CHANNELS.CREATE_SALE, input),
   getSales: (limit = 100) => ipcRenderer.invoke(IPC_CHANNELS.GET_SALES, limit),
   getLastSale: () => ipcRenderer.invoke(IPC_CHANNELS.GET_LAST_SALE),
+  getSale: (id: string) => ipcRenderer.invoke(IPC_CHANNELS.GET_SALE, id),
+
+  // Returns / refunds
+  createReturn: (input: unknown) => ipcRenderer.invoke(IPC_CHANNELS.CREATE_RETURN, input),
+  getReturns: (limit = 100) => ipcRenderer.invoke(IPC_CHANNELS.GET_RETURNS, limit),
+
+  // Branches / Tills
+  getBranches: () => ipcRenderer.invoke(IPC_CHANNELS.GET_BRANCHES),
+  createBranch: (name: string) => ipcRenderer.invoke(IPC_CHANNELS.CREATE_BRANCH, name),
+  getTills: () => ipcRenderer.invoke(IPC_CHANNELS.GET_TILLS),
+  createTill: (name: string, branchId: string) =>
+    ipcRenderer.invoke(IPC_CHANNELS.CREATE_TILL, name, branchId),
 
   // Held carts
   holdCart: (label: string, items: unknown[], total: number) => ipcRenderer.invoke(IPC_CHANNELS.HOLD_CART, label, items, total),
@@ -48,6 +60,7 @@ const api = {
   getPrinters: () => ipcRenderer.invoke(IPC_CHANNELS.GET_PRINTERS),
   printReceipt: (sale: unknown) => ipcRenderer.invoke(IPC_CHANNELS.PRINT_RECEIPT, sale),
   reprintReceipt: () => ipcRenderer.invoke(IPC_CHANNELS.REPRINT_RECEIPT),
+  printRefund: (ret: unknown) => ipcRenderer.invoke(IPC_CHANNELS.PRINT_REFUND, ret),
   printBarcodeLabel: (product: unknown) =>
     ipcRenderer.invoke(IPC_CHANNELS.PRINT_BARCODE_LABEL, product),
 
@@ -67,7 +80,19 @@ const api = {
   // Reports
   getDashboard: () => ipcRenderer.invoke(IPC_CHANNELS.GET_DASHBOARD),
   getSalesReport: (from: string, to: string) =>
-    ipcRenderer.invoke(IPC_CHANNELS.GET_SALES_REPORT, from, to)
+    ipcRenderer.invoke(IPC_CHANNELS.GET_SALES_REPORT, from, to),
+
+  // Shop
+  getShop: () => ipcRenderer.invoke('shop:get'),
+
+  // Sync
+  getSyncStatus: () => ipcRenderer.invoke('sync:get-status'),
+  triggerSync: () => ipcRenderer.invoke('sync:trigger-now'),
+  reconfigureSync: () => ipcRenderer.invoke('sync:reconfigure'),
+
+  // Auto-update
+  checkForUpdates: () => ipcRenderer.invoke('updater:check'),
+  restartAndUpdate: () => ipcRenderer.invoke('updater:restart')
 }
 
 export type PosApi = typeof api

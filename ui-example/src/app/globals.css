@@ -1,0 +1,262 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* Override Tailwind's default slate palette to be theme-aware.
+   In :root (light), slate values are remapped for readability on light backgrounds.
+   In .dark, the original dark slate values are restored. */
+@theme {
+  --color-slate-950: var(--slate-950);
+  --color-slate-900: var(--slate-900);
+  --color-slate-800: var(--slate-800);
+  --color-slate-700: var(--slate-700);
+  --color-slate-600: var(--slate-600);
+  --color-slate-500: var(--slate-500);
+  --color-slate-400: var(--slate-400);
+  --color-slate-300: var(--slate-300);
+  --color-slate-200: var(--slate-200);
+  --color-slate-100: var(--slate-100);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  --radius: 0.625rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* ===== POS App Custom Styles ===== */
+:root {
+  /* Light theme (default) */
+  --pos-bg: #f8fafc;
+  --pos-elev: #ffffff;
+  --pos-elev-2: #f1f5f9;
+  --pos-border: #cbd5e1;
+  --pos-border-soft: #e2e8f0;
+  --pos-text: #0f172a;
+  --pos-text-secondary: #334155;
+  --pos-muted: #64748b;
+  --pos-muted-2: #94a3b8;
+  --pos-primary: #0d9488;
+  --pos-primary-hover: #0f766e;
+  --pos-primary-foreground: #f0fdfa;
+  --pos-accent: #d97706;
+  --pos-danger: #dc2626;
+  --pos-success: #16a34a;
+  --pos-hover: #f1f5f9;
+}
+
+.dark {
+  /* Dark theme */
+  --pos-bg: #020617;
+  --pos-elev: #0f172a;
+  --pos-elev-2: #1e293b;
+  --pos-border: #334155;
+  --pos-border-soft: #1e293b;
+  --pos-text: #f1f5f9;
+  --pos-text-secondary: #e2e8f0;
+  --pos-muted: #94a3b8;
+  --pos-muted-2: #64748b;
+  --pos-primary: #14b8a6;
+  --pos-primary-hover: #0d9488;
+  --pos-primary-foreground: #042f2e;
+  --pos-accent: #f59e0b;
+  --pos-danger: #ef4444;
+  --pos-success: #22c55e;
+  --pos-hover: #1e293b;
+}
+
+.pos-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+.pos-scroll::-webkit-scrollbar-track { background: transparent; }
+.pos-scroll::-webkit-scrollbar-thumb { background: var(--pos-border); border-radius: 3px; }
+.pos-scroll::-webkit-scrollbar-thumb:hover { background: var(--pos-muted); }
+
+@keyframes pos-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.85); }
+}
+.pos-pulse { animation: pos-pulse 2s ease-in-out infinite; }
+
+@keyframes pos-slide-up {
+  from { transform: translateY(8px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.pos-slide-up { animation: pos-slide-up 0.2s ease-out; }
+
+@keyframes pos-cart-add {
+  0% { transform: scale(0.95); opacity: 0; }
+  50% { transform: scale(1.02); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.pos-cart-add { animation: pos-cart-add 0.25s ease-out; }
+
+.pos-grid-bg {
+  background-image:
+    radial-gradient(circle at 1px 1px, rgb(30 41 59 / 0.5) 1px, transparent 0);
+  background-size: 24px 24px;
+}
+
+.pos-glow {
+  box-shadow: 0 0 0 1px rgb(20 184 166 / 0.2), 0 8px 24px -8px rgb(20 184 166 / 0.3);
+}
+
+.pos-receipt {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.pos-scroll-hide { scrollbar-width: none; -ms-overflow-style: none; }
+.pos-scroll-hide::-webkit-scrollbar { display: none; }
+
+/* ===== LIGHT MODE OVERRIDES =====
+   The app was originally built dark-only with hardcoded slate-* classes.
+   Tailwind v4 generates utilities from --color-* theme variables.
+   We redefine the slate palette in :root (light) so every bg-slate-*, text-slate-*,
+   border-slate-* automatically becomes light-theme-appropriate.
+   The .dark block below restores the original dark slate values. */
+
+:root {
+  /* Light-mode slate palette (overridden for readability on light backgrounds) */
+  --slate-950: #f8fafc;  /* page bg: near-white */
+  --slate-900: #ffffff;  /* cards: white */
+  --slate-800: #f1f5f9;  /* elevated: light gray */
+  --slate-700: #e2e8f0;  /* hover bg */
+  --slate-600: #94a3b8;  /* muted */
+  --slate-500: #64748b;  /* secondary text */
+  --slate-400: #475569;  /* readable gray */
+  --slate-300: #334155;  /* medium text */
+  --slate-200: #1e293b;  /* strong text */
+  --slate-100: #0f172a;  /* primary text */
+}
+
+.dark {
+  /* Dark-mode slate palette (Tailwind defaults) */
+  --slate-950: #020617;
+  --slate-900: #0f172a;
+  --slate-800: #1e293b;
+  --slate-700: #334155;
+  --slate-600: #475569;
+  --slate-500: #64748b;
+  --slate-400: #94a3b8;
+  --slate-300: #cbd5e1;
+  --slate-200: #e2e8f0;
+  --slate-100: #f1f5f9;
+}
+
+/* Grid background dots for light mode */
+:root:not(.dark) .pos-grid-bg {
+  background-image: radial-gradient(circle at 1px 1px, rgb(203 213 225 / 0.6) 1px, transparent 0);
+}

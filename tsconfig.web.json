@@ -11,7 +11,8 @@
     "baseUrl": ".",
     "paths": {
       "@renderer/*": ["src/renderer/src/*"],
-      "@shared/*": ["src/shared/*"]
+      "@shared/*": ["src/shared/*"],
+      "@/*": ["src/renderer/src/*"]
     },
     "jsx": "react-jsx"
   }

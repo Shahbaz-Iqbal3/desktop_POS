@@ -4,18 +4,21 @@
 // never shipped with the app. The public key is baked in below.
 import { ipcMain } from 'electron'
 import { createHash } from 'crypto'
-import { machineIdSync } from 'node-machine-id'
+import nodeMachineId from 'node-machine-id'
+const { machineIdSync } = nodeMachineId
 import { getSetting, setSetting } from './db'
 
 // --- Public key (Ed25519, base64) ---
 // This corresponds to the private key in scripts/license-keygen.ts.
 // Generated once; replace both keys together if you ever rotate.
+// Public key (Ed25519, base64 DER/SPKI) baked into the app. Generated once by
+// scripts/license-keygen.ts and stored privately in ./license-keys.json
+// (gitignored). The matching private key is used only to sign license keys.
+// Keep the private key safe — if it leaks, anyone can mint licenses.
 const LICENSE_PUBLIC_KEY_B64 = process.env.POS_LICENSE_PUBLIC_KEY ?? ''
-// Fallback demo public key — replace with your real one before shipping.
-const DEMO_PUBLIC_KEY_B64 =
-  'MCowBQYDK2VwAyEAGn6r2LqZ6J5xJ5yJ5xJ5yJ5xJ5yJ5xJ5yJ5xJ5yJ5xJ5yJ5xJ5yJ5xJ5yJ5xJ5yJ='
-
-const PUBLIC_KEY = LICENSE_PUBLIC_KEY_B64 || DEMO_PUBLIC_KEY_B64
+const PUBLIC_KEY =
+  LICENSE_PUBLIC_KEY_B64 ||
+  'MCowBQYDK2VwAyEA1a/zG/WDA9gVk5e9vjCVx6sFk9TpbuPcIb/BtS5nwkM='
 
 const GRACE_PERIOD_DAYS = 7
 
@@ -88,9 +91,9 @@ export function verifyLicenseKey(key: string, expectedMachineId: string): {
 
 function verifyEd25519(pubKey: Buffer, data: Buffer, sig: Buffer): boolean {
   try {
-    // Use Node's built-in crypto.verify (available in Electron main process).
     const crypto = require('crypto')
-    return crypto.verify('', data, pubKey, sig)
+    const keyObject = crypto.createPublicKey({ key: pubKey, format: 'der', type: 'spki' })
+    return crypto.verify(null, data, keyObject, sig)
   } catch {
     return false
   }

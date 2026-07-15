@@ -8,6 +8,7 @@ import { v4 as uuidv4 } from 'uuid'
 import type {
   Sale,
   SaleItem,
+  SaleReturn,
   StockMovement,
   Product,
   Category,
@@ -19,6 +20,25 @@ import type {
 } from '@shared/types'
 
 let db: Database.Database
+
+// ---------- Helpers ----------
+
+/** Convert a snake_case object key to camelCase: default_price → defaultPrice */
+function toCamel(str: string): string {
+  return str.replace(/_([a-z])/g, (_, c) => c.toUpperCase())
+}
+
+/** Map all snake_case keys in a row to camelCase */
+function mapRow<T>(row: Record<string, unknown>): T {
+  const out: Record<string, unknown> = {}
+  for (const [k, v] of Object.entries(row)) out[toCamel(k)] = v
+  return out as T
+}
+
+/** Map an array of rows */
+function mapRows<T>(rows: unknown[]): T[] {
+  return rows.map((r) => mapRow<T>(r as Record<string, unknown>))
+}
 
 // ---------- Init ----------
 
@@ -38,22 +58,35 @@ export function initDatabase(): void {
 
 function createSchema(): void {
   db.exec(`
+    CREATE TABLE IF NOT EXISTS shops (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      access_token TEXT NOT NULL UNIQUE,
+      created_at TEXT NOT NULL
+    );
+
     CREATE TABLE IF NOT EXISTS branches (
       id TEXT PRIMARY KEY,
-      name TEXT NOT NULL
+      name TEXT NOT NULL,
+      shop_id TEXT NOT NULL,
+      FOREIGN KEY (shop_id) REFERENCES shops(id)
     );
 
     CREATE TABLE IF NOT EXISTS tills (
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
       branch_id TEXT NOT NULL,
-      FOREIGN KEY (branch_id) REFERENCES branches(id)
+      shop_id TEXT NOT NULL,
+      FOREIGN KEY (branch_id) REFERENCES branches(id),
+      FOREIGN KEY (shop_id) REFERENCES shops(id)
     );
 
     CREATE TABLE IF NOT EXISTS categories (
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
-      sort_order INTEGER NOT NULL DEFAULT 0
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      shop_id TEXT NOT NULL,
+      FOREIGN KEY (shop_id) REFERENCES shops(id)
     );
 
     CREATE TABLE IF NOT EXISTS products (
@@ -66,7 +99,9 @@ function createSchema(): void {
       default_price REAL NOT NULL DEFAULT 0,
       low_stock_threshold INTEGER NOT NULL DEFAULT 5,
       created_at TEXT NOT NULL,
-      FOREIGN KEY (category_id) REFERENCES categories(id)
+      shop_id TEXT NOT NULL,
+      FOREIGN KEY (category_id) REFERENCES categories(id),
+      FOREIGN KEY (shop_id) REFERENCES shops(id)
     );
 
     -- Stock is NEVER stored as a mutable number on products.
@@ -79,7 +114,9 @@ function createSchema(): void {
       reason TEXT NOT NULL,
       created_at TEXT NOT NULL,
       synced INTEGER NOT NULL DEFAULT 0,
-      FOREIGN KEY (product_id) REFERENCES products(id)
+      shop_id TEXT NOT NULL,
+      FOREIGN KEY (product_id) REFERENCES products(id),
+      FOREIGN KEY (shop_id) REFERENCES shops(id)
     );
 
     CREATE TABLE IF NOT EXISTS sales (
@@ -93,8 +130,10 @@ function createSchema(): void {
       payment_method TEXT NOT NULL DEFAULT 'cash',
       created_at TEXT NOT NULL,
       synced INTEGER NOT NULL DEFAULT 0,
+      shop_id TEXT NOT NULL,
       FOREIGN KEY (branch_id) REFERENCES branches(id),
-      FOREIGN KEY (till_id) REFERENCES tills(id)
+      FOREIGN KEY (till_id) REFERENCES tills(id),
+      FOREIGN KEY (shop_id) REFERENCES shops(id)
     );
 
     CREATE TABLE IF NOT EXISTS shifts (
@@ -105,7 +144,9 @@ function createSchema(): void {
       expected_cash REAL,
       opened_at TEXT NOT NULL,
       closed_at TEXT,
-      FOREIGN KEY (till_id) REFERENCES tills(id)
+      shop_id TEXT NOT NULL,
+      FOREIGN KEY (till_id) REFERENCES tills(id),
+      FOREIGN KEY (shop_id) REFERENCES shops(id)
     );
 
     CREATE TABLE IF NOT EXISTS settings (
@@ -119,7 +160,9 @@ function createSchema(): void {
       stack TEXT,
       context TEXT,
       created_at TEXT NOT NULL,
-      synced INTEGER NOT NULL DEFAULT 0
+      synced INTEGER NOT NULL DEFAULT 0,
+      shop_id TEXT NOT NULL,
+      FOREIGN KEY (shop_id) REFERENCES shops(id)
     );
 
     CREATE TABLE IF NOT EXISTS feedback (
@@ -127,7 +170,9 @@ function createSchema(): void {
       message TEXT NOT NULL,
       rating INTEGER,
       created_at TEXT NOT NULL,
-      synced INTEGER NOT NULL DEFAULT 0
+      synced INTEGER NOT NULL DEFAULT 0,
+      shop_id TEXT NOT NULL,
+      FOREIGN KEY (shop_id) REFERENCES shops(id)
     );
 
     CREATE TABLE IF NOT EXISTS held_carts (
@@ -138,32 +183,103 @@ function createSchema(): void {
       held_at TEXT NOT NULL
     );
 
+    CREATE TABLE IF NOT EXISTS returns (
+      id TEXT PRIMARY KEY,
+      sale_id TEXT NOT NULL,
+      branch_id TEXT NOT NULL,
+      till_id TEXT NOT NULL,
+      shift_id TEXT,
+      items TEXT NOT NULL,        -- JSON array of refunded SaleItem
+      total REAL NOT NULL,
+      refund_amount REAL NOT NULL,
+      payment_method TEXT NOT NULL DEFAULT 'cash',
+      created_at TEXT NOT NULL,
+      synced INTEGER NOT NULL DEFAULT 0,
+      shop_id TEXT NOT NULL,
+      FOREIGN KEY (branch_id) REFERENCES branches(id),
+      FOREIGN KEY (till_id) REFERENCES tills(id),
+      FOREIGN KEY (shop_id) REFERENCES shops(id)
+    );
+
     CREATE INDEX IF NOT EXISTS idx_stock_movements_product ON stock_movements(product_id);
     CREATE INDEX IF NOT EXISTS idx_sales_created ON sales(created_at);
     CREATE INDEX IF NOT EXISTS idx_sales_synced ON sales(synced);
     CREATE INDEX IF NOT EXISTS idx_stock_synced ON stock_movements(synced);
+    CREATE INDEX IF NOT EXISTS idx_shops_token ON shops(access_token);
   `)
+
+  // Migration: Add shop_id columns if they don't exist (for existing databases)
+  migrateToMultiShop()
+}
+
+function migrateToMultiShop(): void {
+  const tables = [
+    'branches',
+    'tills',
+    'categories',
+    'products',
+    'stock_movements',
+    'sales',
+    'shifts',
+    'error_logs',
+    'feedback',
+    'returns'
+  ]
+
+  for (const table of tables) {
+    try {
+      // Check if shop_id column exists
+      const pragma = db.pragma(`table_info(${table})`) as Array<{ name: string }>
+      const hasShopId = pragma.some(col => col.name === 'shop_id')
+      
+      if (!hasShopId) {
+        console.log(`[db] Adding shop_id column to ${table}`)
+        db.exec(`ALTER TABLE ${table} ADD COLUMN shop_id TEXT`)
+      }
+    } catch (err) {
+      console.warn(`[db] Migration check failed for ${table}:`, err)
+    }
+  }
 }
 
 function seedDefaults(): void {
   const now = new Date().toISOString()
 
+  // Ensure we have a shop_id in settings (for new installations)
+  const shopId = getSetting('shopId')
+  if (!shopId) {
+    const newShopId = uuidv4()
+    setSetting('shopId', newShopId)
+    // Create default shop
+    const accessToken = generateAccessToken()
+    db.prepare('INSERT INTO shops (id, name, access_token, created_at) VALUES (?, ?, ?, ?)').run(
+      newShopId,
+      'My Shop',
+      accessToken,
+      now
+    )
+  }
+
+  const currentShopId = getSetting('shopId')!
+
   // Default branch
   const branchCount = db.prepare('SELECT COUNT(*) as c FROM branches').get() as { c: number }
   if (branchCount.c === 0) {
-    db.prepare('INSERT INTO branches (id, name) VALUES (?, ?)').run(
+    db.prepare('INSERT INTO branches (id, name, shop_id) VALUES (?, ?, ?)').run(
       'branch-default',
-      'Main Branch'
+      'Main Branch',
+      currentShopId
     )
   }
 
   // Default till
   const tillCount = db.prepare('SELECT COUNT(*) as c FROM tills').get() as { c: number }
   if (tillCount.c === 0) {
-    db.prepare('INSERT INTO tills (id, name, branch_id) VALUES (?, ?, ?)').run(
+    db.prepare('INSERT INTO tills (id, name, branch_id, shop_id) VALUES (?, ?, ?, ?)').run(
       'till-1',
       'Till 1',
-      'branch-default'
+      'branch-default',
+      currentShopId
     )
   }
 
@@ -194,18 +310,18 @@ function seedDefaults(): void {
       { id: uuidv4(), name: 'Ready-made', sort: 2 }
     ]
     const insertCat = db.prepare(
-      'INSERT INTO categories (id, name, sort_order) VALUES (?, ?, ?)'
+      'INSERT INTO categories (id, name, sort_order, shop_id) VALUES (?, ?, ?, ?)'
     )
-    cats.forEach((c) => insertCat.run(c.id, c.name, c.sort))
+    cats.forEach((c) => insertCat.run(c.id, c.name, c.sort, currentShopId))
 
     // Seed products + initial stock
     const insertProduct = db.prepare(
-      `INSERT INTO products (id, name, category_id, sku, barcode, unit_type, default_price, low_stock_threshold, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO products (id, name, category_id, sku, barcode, unit_type, default_price, low_stock_threshold, created_at, shop_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     )
     const insertMovement = db.prepare(
-      `INSERT INTO stock_movements (id, product_id, category, change_amount, reason, created_at, synced)
-       VALUES (?, ?, ?, ?, ?, ?, 1)`
+      `INSERT INTO stock_movements (id, product_id, category, change_amount, reason, created_at, synced, shop_id)
+       VALUES (?, ?, ?, ?, ?, ?, 1, ?)`
     )
 
     const fabricsId = cats[0].id
@@ -231,7 +347,8 @@ function seedDefaults(): void {
         p.unit,
         p.price,
         5,
-        now
+        now,
+        currentShopId
       )
       insertMovement.run(
         uuidv4(),
@@ -239,28 +356,36 @@ function seedDefaults(): void {
         'initial',
         p.stock,
         'Initial stock',
-        now
+        now,
+        currentShopId
       )
     }
   }
+}
+
+function generateAccessToken(): string {
+  // Generate a random 32-character hex string for access token
+  const crypto = require('crypto')
+  return crypto.randomBytes(16).toString('hex')
 }
 
 // ---------- Products / Categories ----------
 
 export function getProducts(categoryId?: string): Product[] {
   if (categoryId) {
-    return db.prepare('SELECT * FROM products WHERE category_id = ? ORDER BY name').all(categoryId) as Product[]
+    return mapRows<Product>(db.prepare('SELECT * FROM products WHERE category_id = ? ORDER BY name').all(categoryId))
   }
-  return db.prepare('SELECT * FROM products ORDER BY name').all() as Product[]
+  return mapRows<Product>(db.prepare('SELECT * FROM products ORDER BY name').all())
 }
 
 export function getCategories(): Category[] {
-  return db.prepare('SELECT * FROM categories ORDER BY sort_order, name').all() as Category[]
+  return mapRows<Category>(db.prepare('SELECT * FROM categories ORDER BY sort_order, name').all())
 }
 
 export function createCategory(name: string, sortOrder = 0): Category {
   const id = uuidv4()
-  db.prepare('INSERT INTO categories (id, name, sort_order) VALUES (?, ?, ?)').run(id, name, sortOrder)
+  const shopId = getSetting('shopId')!
+  db.prepare('INSERT INTO categories (id, name, sort_order, shop_id) VALUES (?, ?, ?, ?)').run(id, name, sortOrder, shopId)
   return { id, name, sortOrder }
 }
 
@@ -276,9 +401,10 @@ export function createProduct(input: {
 }): Product {
   const id = uuidv4()
   const now = new Date().toISOString()
+  const shopId = getSetting('shopId')!
   db.prepare(
-    `INSERT INTO products (id, name, category_id, sku, barcode, unit_type, default_price, low_stock_threshold, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    `INSERT INTO products (id, name, category_id, sku, barcode, unit_type, default_price, low_stock_threshold, created_at, shop_id)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).run(
     id,
     input.name,
@@ -288,7 +414,8 @@ export function createProduct(input: {
     input.unitType,
     input.defaultPrice,
     input.lowStockThreshold ?? 5,
-    now
+    now,
+    shopId
   )
   if (input.initialStock && input.initialStock !== 0) {
     addStockMovement({
@@ -340,16 +467,19 @@ export function holdCart(label: string, items: SaleItem[], total: number): HeldC
 }
 
 export function getHeldCarts(): HeldCart[] {
-  const rows = db.prepare('SELECT * FROM held_carts ORDER BY held_at DESC').all() as Array<Omit<HeldCart, 'items'> & { items: string }>
+  const rows = mapRows<{ id: string; label: string; items: string; total: number; heldAt: string }>(
+    db.prepare('SELECT * FROM held_carts ORDER BY held_at DESC').all()
+  )
   return rows.map((r) => ({ ...r, items: JSON.parse(r.items) as SaleItem[] }))
 }
 
 export function recallCart(id: string): HeldCart | null {
-  const row = db.prepare('SELECT * FROM held_carts WHERE id = ?').get(id) as (Omit<HeldCart, 'items'> & { items: string }) | undefined
+  const row = db.prepare('SELECT * FROM held_carts WHERE id = ?').get(id) as Record<string, unknown> | undefined
   if (!row) return null
+  const mapped = mapRow<{ id: string; label: string; items: string; total: number; heldAt: string }>(row)
   // Remove from held after recall
   db.prepare('DELETE FROM held_carts WHERE id = ?').run(id)
-  return { ...row, items: JSON.parse(row.items) as SaleItem[] }
+  return { ...mapped, items: JSON.parse(mapped.items) as SaleItem[] }
 }
 
 export function deleteHeldCart(id: string): void {
@@ -384,10 +514,11 @@ export function addStockMovement(input: {
 }): StockMovement {
   const id = uuidv4()
   const now = new Date().toISOString()
+  const shopId = getSetting('shopId')!
   db.prepare(
-    `INSERT INTO stock_movements (id, product_id, category, change_amount, reason, created_at, synced)
-     VALUES (?, ?, ?, ?, ?, ?, 0)`
-  ).run(id, input.productId, input.category, input.changeAmount, input.reason, now)
+    `INSERT INTO stock_movements (id, product_id, category, change_amount, reason, created_at, synced, shop_id)
+     VALUES (?, ?, ?, ?, ?, ?, 0, ?)`
+  ).run(id, input.productId, input.category, input.changeAmount, input.reason, now, shopId)
   return {
     id,
     productId: input.productId,
@@ -415,11 +546,12 @@ export function createSale(input: {
 }): Sale {
   const id = uuidv4()
   const now = new Date().toISOString()
+  const shopId = getSetting('shopId')!
 
   const tx = db.transaction(() => {
     db.prepare(
-      `INSERT INTO sales (id, branch_id, till_id, shift_id, items, total, actual_paid_price, payment_method, created_at, synced)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0)`
+      `INSERT INTO sales (id, branch_id, till_id, shift_id, items, total, actual_paid_price, payment_method, created_at, synced, shop_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?)`
     ).run(
       id,
       input.branchId,
@@ -429,13 +561,14 @@ export function createSale(input: {
       input.total,
       input.actualPaidPrice,
       input.paymentMethod,
-      now
+      now,
+      shopId
     )
 
     // Write a stock movement per line item
     const moveStmt = db.prepare(
-      `INSERT INTO stock_movements (id, product_id, category, change_amount, reason, created_at, synced)
-       VALUES (?, ?, ?, ?, ?, ?, 0)`
+      `INSERT INTO stock_movements (id, product_id, category, change_amount, reason, created_at, synced, shop_id)
+       VALUES (?, ?, ?, ?, ?, ?, 0, ?)`
     )
     for (const item of input.items) {
       moveStmt.run(
@@ -444,7 +577,8 @@ export function createSale(input: {
         'sale',
         -Math.abs(item.quantity),
         `Sale ${id} - ${item.name}`,
-        now
+        now,
+        shopId
       )
     }
   })
@@ -466,18 +600,114 @@ export function createSale(input: {
 }
 
 export function getSales(limit = 100): Sale[] {
-  const rows = db
-    .prepare('SELECT * FROM sales ORDER BY created_at DESC LIMIT ?')
-    .all(limit) as Array<Omit<Sale, 'items'> & { items: string }>
-  return rows.map((r) => ({ ...r, items: JSON.parse(r.items) as SaleItem[] }))
+  const rows = mapRows<{ id: string; branch_id: string; till_id: string; shift_id: string; items: string; total: number; actual_paid_price: number; payment_method: string; created_at: string; synced: number }>(
+    db.prepare('SELECT * FROM sales ORDER BY created_at DESC LIMIT ?').all(limit)
+  )
+  return rows.map((r) => ({ ...mapRow<Sale>(r), items: JSON.parse(r.items) as SaleItem[] }))
 }
 
 export function getLastSale(): Sale | null {
   const row = db
     .prepare('SELECT * FROM sales ORDER BY created_at DESC LIMIT 1')
-    .get() as (Omit<Sale, 'items'> & { items: string }) | undefined
+    .get() as Record<string, unknown> | undefined
   if (!row) return null
-  return { ...row, items: JSON.parse(row.items) as SaleItem[] }
+  const mapped = mapRow<{ items: string }>(row)
+  return { ...mapRow<Sale>(row), items: JSON.parse(mapped.items) as SaleItem[] }
+}
+
+export function getSale(id: string): Sale | null {
+  const row = db.prepare('SELECT * FROM sales WHERE id = ?').get(id) as Record<string, unknown> | undefined
+  if (!row) return null
+  const mapped = mapRow<{ items: string }>(row)
+  return { ...mapRow<Sale>(row), items: JSON.parse(mapped.items) as SaleItem[] }
+}
+
+// ---------- Returns / refunds ----------
+// A refund REVERSES stock (adds it back) and is recorded atomically with the
+// return row. Never let a partial failure leave the DB inconsistent.
+export function createReturn(input: {
+  saleId: string
+  branchId: string
+  tillId: string
+  shiftId: string | null
+  items: SaleItem[]
+  total: number
+  refundAmount: number
+  paymentMethod: 'cash' | 'digital'
+}): SaleReturn {
+  const id = uuidv4()
+  const now = new Date().toISOString()
+  const shopId = getSetting('shopId')!
+
+  const tx = db.transaction(() => {
+    db.prepare(
+      `INSERT INTO returns (id, sale_id, branch_id, till_id, shift_id, items, total, refund_amount, payment_method, created_at, synced, shop_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?)`
+    ).run(
+      id,
+      input.saleId,
+      input.branchId,
+      input.tillId,
+      input.shiftId,
+      JSON.stringify(input.items),
+      input.total,
+      input.refundAmount,
+      input.paymentMethod,
+      now,
+      shopId
+    )
+
+    const moveStmt = db.prepare(
+      `INSERT INTO stock_movements (id, product_id, category, change_amount, reason, created_at, synced, shop_id)
+       VALUES (?, ?, ?, ?, ?, ?, 0, ?)`
+    )
+    for (const item of input.items) {
+      moveStmt.run(
+        uuidv4(),
+        item.productId,
+        'refund',
+        Math.abs(item.quantity),
+        `Refund ${id} (sale ${input.saleId}) - ${item.name}`,
+        now,
+        shopId
+      )
+    }
+  })
+
+  tx()
+
+  return {
+    id,
+    saleId: input.saleId,
+    branchId: input.branchId,
+    tillId: input.tillId,
+    shiftId: input.shiftId,
+    items: input.items,
+    total: input.total,
+    refundAmount: input.refundAmount,
+    paymentMethod: input.paymentMethod,
+    createdAt: now,
+    synced: 0
+  }
+}
+
+export function getReturns(limit = 100): SaleReturn[] {
+  const rows = mapRows<{ id: string; sale_id: string; branch_id: string; till_id: string; shift_id: string; items: string; total: number; refund_amount: number; payment_method: string; created_at: string; synced: number }>(
+    db.prepare('SELECT * FROM returns ORDER BY created_at DESC LIMIT ?').all(limit)
+  )
+  return rows.map((r) => ({
+    id: r.id,
+    saleId: r.sale_id,
+    branchId: r.branch_id,
+    tillId: r.till_id,
+    shiftId: r.shift_id,
+    items: JSON.parse(r.items) as SaleItem[],
+    total: r.total,
+    refundAmount: r.refund_amount,
+    paymentMethod: r.payment_method as 'cash' | 'digital',
+    createdAt: r.created_at,
+    synced: r.synced as 0 | 1
+  }))
 }
 
 // ---------- Shifts ----------
@@ -485,8 +715,8 @@ export function getLastSale(): Sale | null {
 export function getOpenShift(tillId: string): Shift | null {
   const row = db
     .prepare('SELECT * FROM shifts WHERE till_id = ? AND closed_at IS NULL ORDER BY opened_at DESC LIMIT 1')
-    .get(tillId) as Shift | undefined
-  return row ?? null
+    .get(tillId) as Record<string, unknown> | undefined
+  return row ? mapRow<Shift>(row) : null
 }
 
 export function openShift(tillId: string, openingCash: number): Shift {
@@ -497,9 +727,10 @@ export function openShift(tillId: string, openingCash: number): Shift {
   }
   const id = uuidv4()
   const now = new Date().toISOString()
+  const shopId = getSetting('shopId')!
   db.prepare(
-    'INSERT INTO shifts (id, till_id, opening_cash, opened_at) VALUES (?, ?, ?, ?)'
-  ).run(id, tillId, openingCash, now)
+    'INSERT INTO shifts (id, till_id, opening_cash, opened_at, shop_id) VALUES (?, ?, ?, ?, ?)'
+  ).run(id, tillId, openingCash, now, shopId)
   return {
     id,
     tillId,
@@ -512,7 +743,7 @@ export function openShift(tillId: string, openingCash: number): Shift {
 }
 
 export function closeShift(shiftId: string, countedCash: number): Shift {
-  const shift = db.prepare('SELECT * FROM shifts WHERE id = ?').get(shiftId) as Shift | undefined
+  const shift = mapRow<Shift | undefined>(db.prepare('SELECT * FROM shifts WHERE id = ?').get(shiftId) as Record<string, unknown>)
   if (!shift) throw new Error(`Shift ${shiftId} not found`)
   if (shift.closedAt) throw new Error(`Shift ${shiftId} already closed`)
 
@@ -535,9 +766,7 @@ export function closeShift(shiftId: string, countedCash: number): Shift {
 }
 
 export function getShifts(limit = 50): Shift[] {
-  return db
-    .prepare('SELECT * FROM shifts ORDER BY opened_at DESC LIMIT ?')
-    .all(limit) as Shift[]
+  return mapRows<Shift>(db.prepare('SELECT * FROM shifts ORDER BY opened_at DESC LIMIT ?').all(limit))
 }
 
 // ---------- Settings ----------
@@ -573,28 +802,56 @@ export function setSettings(values: Record<string, string>): void {
 // ---------- Branches / Tills ----------
 
 export function getBranches(): Branch[] {
-  return db.prepare('SELECT * FROM branches').all() as Branch[]
+  return mapRows<Branch>(db.prepare('SELECT * FROM branches').all())
 }
 
 export function getTills(): Till[] {
-  return db.prepare('SELECT * FROM tills').all() as Till[]
+  return mapRows<Till>(db.prepare('SELECT * FROM tills').all())
+}
+
+export function createBranch(name: string): Branch {
+  const id = uuidv4()
+  const shopId = getSetting('shopId')!
+  db.prepare('INSERT INTO branches (id, name, shop_id) VALUES (?, ?, ?)').run(id, name, shopId)
+  return { id, name }
+}
+
+export function createTill(name: string, branchId: string): Till {
+  const id = uuidv4()
+  const shopId = getSetting('shopId')!
+  db.prepare('INSERT INTO tills (id, name, branch_id, shop_id) VALUES (?, ?, ?, ?)').run(
+    id,
+    name,
+    branchId,
+    shopId
+  )
+  return { id, name, branchId }
 }
 
 // ---------- Error logs / Feedback ----------
 
 export function logError(input: { message: string; stack?: string; context?: string }): void {
+  const shopId = getSetting('shopId')!
   db.prepare(
-    'INSERT INTO error_logs (id, message, stack, context, created_at, synced) VALUES (?, ?, ?, ?, ?, 0)'
-  ).run(uuidv4(), input.message, input.stack ?? null, input.context ?? null, new Date().toISOString())
+    'INSERT INTO error_logs (id, message, stack, context, created_at, synced, shop_id) VALUES (?, ?, ?, ?, ?, 0, ?)'
+  ).run(uuidv4(), input.message, input.stack ?? null, input.context ?? null, new Date().toISOString(), shopId)
 }
 
 export function submitFeedback(input: { message: string; rating?: number }): void {
+  const shopId = getSetting('shopId')!
   db.prepare(
-    'INSERT INTO feedback (id, message, rating, created_at, synced) VALUES (?, ?, ?, ?, 0)'
-  ).run(uuidv4(), input.message, input.rating ?? null, new Date().toISOString())
+    'INSERT INTO feedback (id, message, rating, created_at, synced, shop_id) VALUES (?, ?, ?, ?, 0, ?)'
+  ).run(uuidv4(), input.message, input.rating ?? null, new Date().toISOString(), shopId)
 }
 
 // ---------- Reports ----------
+
+export function getShop(): { id: string; name: string; accessToken: string } | null {
+  const shopId = getSetting('shopId')
+  if (!shopId) return null
+  const row = db.prepare('SELECT * FROM shops WHERE id = ?').get(shopId) as Record<string, unknown> | undefined
+  return row ? mapRow<{ id: string; name: string; accessToken: string }>(row) : null
+}
 
 export function getDashboard(): {
   todaySales: { total: number; count: number }
@@ -605,22 +862,23 @@ export function getDashboard(): {
   const todayStart = new Date()
   todayStart.setHours(0, 0, 0, 0)
   const todayIso = todayStart.toISOString()
+  const shopId = getSetting('shopId')!
 
   const todayRow = db
     .prepare(
       `SELECT COALESCE(SUM(total), 0) as total, COUNT(*) as count
-       FROM sales WHERE created_at >= ?`
+       FROM sales WHERE created_at >= ? AND shop_id = ?`
     )
-    .get(todayIso) as { total: number; count: number }
+    .get(todayIso, shopId) as { total: number; count: number }
 
   const splitRow = db
     .prepare(
       `SELECT
          COALESCE(SUM(CASE WHEN payment_method='cash' THEN actual_paid_price ELSE 0 END), 0) as cash,
          COALESCE(SUM(CASE WHEN payment_method='digital' THEN actual_paid_price ELSE 0 END), 0) as digital
-       FROM sales WHERE created_at >= ?`
+       FROM sales WHERE created_at >= ? AND shop_id = ?`
     )
-    .get(todayIso) as { cash: number; digital: number }
+    .get(todayIso, shopId) as { cash: number; digital: number }
 
   // Best category by revenue today
   const bestCatRow = db
@@ -629,21 +887,22 @@ export function getDashboard(): {
        FROM sales s, json_each(s.items) as je
        JOIN products p ON p.id = json_extract(je.value, '$.productId')
        JOIN categories c ON c.id = p.category_id
-       WHERE s.created_at >= ?
+       WHERE s.created_at >= ? AND s.shop_id = ?
        GROUP BY c.id
        ORDER BY total DESC
        LIMIT 1`
     )
-    .get(todayIso) as { name: string; total: number } | undefined
+    .get(todayIso, shopId) as { name: string; total: number } | undefined
 
   // Low stock: products whose computed stock < threshold
   const stockRows = db
     .prepare(
       `SELECT p.id, p.name, p.low_stock_threshold as threshold,
               COALESCE((SELECT SUM(change_amount) FROM stock_movements WHERE product_id = p.id), 0) as stock
-       FROM products p`
+       FROM products p
+       WHERE p.shop_id = ?`
     )
-    .all() as Array<{ id: string; name: string; stock: number; threshold: number }>
+    .all(shopId) as Array<{ id: string; name: string; stock: number; threshold: number }>
   const lowStock = stockRows.filter((r) => r.stock < r.threshold)
 
   return {
@@ -655,10 +914,112 @@ export function getDashboard(): {
 }
 
 export function getSalesReport(from: string, to: string): Sale[] {
+  const shopId = getSetting('shopId')!
+  const rows = mapRows<{ items: string }>(
+    db.prepare('SELECT * FROM sales WHERE created_at >= ? AND created_at <= ? AND shop_id = ? ORDER BY created_at DESC')
+      .all(from, to, shopId)
+  )
+  return rows.map((r) => ({ ...mapRow<Sale>(r), items: JSON.parse(r.items) as SaleItem[] }))
+}
+
+// ---------- Stock report ----------
+
+export function getStockReport(): Array<{
+  id: string
+  name: string
+  category: string
+  unitType: string
+  defaultPrice: number
+  stock: number
+  lowStockThreshold: number
+}> {
+  const shopId = getSetting('shopId')!
   const rows = db
-    .prepare('SELECT * FROM sales WHERE created_at >= ? AND created_at <= ? ORDER BY created_at DESC')
-    .all(from, to) as Array<Omit<Sale, 'items'> & { items: string }>
-  return rows.map((r) => ({ ...r, items: JSON.parse(r.items) as SaleItem[] }))
+    .prepare(
+      `SELECT p.id, p.name, c.name as category, p.unit_type as unitType,
+              p.default_price as defaultPrice, p.low_stock_threshold as lowStockThreshold,
+              COALESCE((SELECT SUM(change_amount) FROM stock_movements WHERE product_id = p.id), 0) as stock
+       FROM products p
+       LEFT JOIN categories c ON c.id = p.category_id
+       WHERE p.shop_id = ?
+       ORDER BY p.name`
+    )
+    .all(shopId) as Array<Record<string, unknown>>
+  return rows.map((r) => mapRow<{
+    id: string
+    name: string
+    category: string
+    unitType: string
+    defaultPrice: number
+    stock: number
+    lowStockThreshold: number
+  }>(r))
+}
+
+// ---------- Cash report (daily cash sales within range) ----------
+
+export function getCashReport(from: string, to: string): Array<{
+  date: string
+  count: number
+  total: number
+}> {
+  const shopId = getSetting('shopId')!
+  const rows = db
+    .prepare(
+      `SELECT DATE(created_at) as date, COUNT(*) as count, COALESCE(SUM(actual_paid_price), 0) as total
+       FROM sales
+       WHERE payment_method = 'cash' AND created_at >= ? AND created_at <= ? AND shop_id = ?
+       GROUP BY DATE(created_at)
+       ORDER BY date`
+    )
+    .all(from, to, shopId) as Array<Record<string, unknown>>
+  return rows.map((r) =>
+    mapRow<{ date: string; count: number; total: number }>(r)
+  )
+}
+
+// ---------- Sync helpers ----------
+
+export function getUnsyncedRows(): {
+  sales: Array<{ id: string; data: Record<string, unknown> }>
+  stockMovements: Array<{ id: string; data: Record<string, unknown> }>
+  returns: Array<{ id: string; data: Record<string, unknown> }>
+  errorLogs: Array<{ id: string; data: Record<string, unknown> }>
+  feedback: Array<{ id: string; data: Record<string, unknown> }>
+} {
+  const shopId = getSetting('shopId')!
+
+  const sales = db.prepare('SELECT * FROM sales WHERE synced = 0 AND shop_id = ?').all(shopId) as Record<string, unknown>[]
+  const stockMovements = db.prepare('SELECT * FROM stock_movements WHERE synced = 0 AND shop_id = ?').all(shopId) as Record<string, unknown>[]
+  const returns = db.prepare('SELECT * FROM returns WHERE synced = 0 AND shop_id = ?').all(shopId) as Record<string, unknown>[]
+  const errorLogs = db.prepare('SELECT * FROM error_logs WHERE synced = 0 AND shop_id = ?').all(shopId) as Record<string, unknown>[]
+  const feedback = db.prepare('SELECT * FROM feedback WHERE synced = 0 AND shop_id = ?').all(shopId) as Record<string, unknown>[]
+
+  return {
+    sales: sales.map(row => ({ id: row.id as string, data: mapRow(row) })),
+    stockMovements: stockMovements.map(row => ({ id: row.id as string, data: mapRow(row) })),
+    returns: returns.map(row => ({ id: row.id as string, data: mapRow(row) })),
+    errorLogs: errorLogs.map(row => ({ id: row.id as string, data: mapRow(row) })),
+    feedback: feedback.map(row => ({ id: row.id as string, data: mapRow(row) }))
+  }
+}
+
+export function markAsSynced(
+  table: 'sales' | 'stock_movements' | 'returns' | 'error_logs' | 'feedback',
+  ids: string[]
+): void {
+  const placeholders = ids.map(() => '?').join(',')
+  db.prepare(`UPDATE ${table} SET synced = 1 WHERE id IN (${placeholders})`).run(...ids)
+}
+
+export function getPendingSyncCount(): number {
+  const shopId = getSetting('shopId')!
+  const salesCount = db.prepare('SELECT COUNT(*) as c FROM sales WHERE synced = 0 AND shop_id = ?').get(shopId) as { c: number }
+  const stockCount = db.prepare('SELECT COUNT(*) as c FROM stock_movements WHERE synced = 0 AND shop_id = ?').get(shopId) as { c: number }
+  const returnsCount = db.prepare('SELECT COUNT(*) as c FROM returns WHERE synced = 0 AND shop_id = ?').get(shopId) as { c: number }
+  const errorCount = db.prepare('SELECT COUNT(*) as c FROM error_logs WHERE synced = 0 AND shop_id = ?').get(shopId) as { c: number }
+  const feedbackCount = db.prepare('SELECT COUNT(*) as c FROM feedback WHERE synced = 0 AND shop_id = ?').get(shopId) as { c: number }
+  return salesCount.c + stockCount.c + returnsCount.c + errorCount.c + feedbackCount.c
 }
 
 // ---------- Backup ----------

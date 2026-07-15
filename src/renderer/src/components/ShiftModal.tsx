@@ -1,11 +1,17 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Clock } from 'lucide-react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from './ui/dialog'
+import { Input } from './ui/input'
+import { Button } from './ui/button'
+import { Label } from './ui/label'
 import type { useToasts } from '../hooks/useToasts'
 
 type Toasts = ReturnType<typeof useToasts>
 
 export function ShiftModal({
   mode,
+  tillId,
   shiftId,
   openingCash,
   expectedCash,
@@ -14,6 +20,7 @@ export function ShiftModal({
   toasts
 }: {
   mode: 'open' | 'close'
+  tillId?: string
   shiftId?: string
   openingCash?: number
   expectedCash?: number
@@ -40,7 +47,7 @@ export function ShiftModal({
     setSubmitting(true)
     try {
       if (mode === 'open') {
-        await window.pos.openShift('till-1', n)
+        await window.pos.openShift(tillId ?? 'till-1', n)
         toasts.success(t('shift.opened'))
       } else if (shiftId) {
         await window.pos.closeShift(shiftId, n)
@@ -56,44 +63,49 @@ export function ShiftModal({
   }
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <h2>{mode === 'open' ? t('shift.open') : t('shift.close')}</h2>
+    <Dialog open onOpenChange={(o) => { if (!o) onClose() }}>
+      <DialogContent className="bg-slate-900 border-slate-800">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Clock className="w-4 h-4 text-teal-400" />
+            {mode === 'open' ? t('shift.open') : t('shift.close')}
+          </DialogTitle>
+          <DialogDescription className="text-slate-400">
+            {mode === 'open'
+              ? 'Enter the opening cash float for this till.'
+              : 'Count the cash in the drawer and enter the total.'}
+          </DialogDescription>
+        </DialogHeader>
 
         {mode === 'close' && expectedCash !== undefined && (
-          <div className="cart-total-row" style={{ marginBottom: 16, background: 'var(--bg)', padding: 12, borderRadius: 6 }}>
-            <span className="label">{t('shift.expectedCash')}</span>
-            <span className="value">Rs {expectedCash.toFixed(2)}</span>
+          <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 space-y-1">
+            <div className="flex justify-between text-xs">
+              <span className="text-slate-500">{t('shift.expectedCash')}</span>
+              <span className="font-mono font-semibold text-teal-400">Rs {expectedCash.toFixed(2)}</span>
+            </div>
           </div>
         )}
 
-        <div className="form-row">
-          <label>
-            {mode === 'open' ? t('shift.openingCash') : t('shift.countedCash')}
-          </label>
-          <input
-            className="form-input"
-            type="number"
-            step="0.01"
-            value={cash}
-            onChange={(e) => setCash(e.target.value)}
-            autoFocus
+        <div className="space-y-2">
+          <Label>{mode === 'open' ? t('shift.openingCash') : t('shift.countedCash')}</Label>
+          <Input
+            type="number" step="0.01" value={cash}
+            onChange={(e) => setCash(e.target.value)} autoFocus
+            className="bg-slate-950 border-slate-700 text-lg font-mono"
           />
         </div>
 
-        <div className="modal-actions">
-          <button className="btn" onClick={onClose}>
-            {t('common.cancel')}
-          </button>
-          <button
-            className="btn btn-primary"
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose} className="border-slate-700">{t('common.cancel')}</Button>
+          <Button
             onClick={handleSubmit}
             disabled={submitting}
+            className="bg-teal-500 text-teal-950 hover:bg-teal-400"
           >
             {submitting ? t('common.loading') : mode === 'open' ? t('shift.confirmOpen') : t('shift.confirmClose')}
-          </button>
-        </div>
-      </div>
-    </div>
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }

@@ -1,10 +1,13 @@
 // Backup & export — runs in the MAIN PROCESS.
 // Backup = file copy of the SQLite database to a user-chosen folder/USB.
 // Export = xlsx report generation.
+// Backup & export — runs in the MAIN PROCESS.
+// Backup = file copy of the SQLite database to a user-chosen folder/USB.
+// Export = xlsx report generation.
 import { app, dialog, ipcMain } from 'electron'
-import { copyFileSync, existsSync, mkdirSync, writeFileSync } from 'fs'
+import { copyFileSync, existsSync, mkdirSync, readdirSync, unlinkSync, writeFileSync } from 'fs'
 import { join } from 'path'
-import { getDbPath, getSalesReport } from './db'
+import { getDbPath, getSetting, getSalesReport, getStockReport, getCashReport } from './db'
 
 export async function backupDatabase(): Promise<{ ok: boolean; path?: string; error?: string }> {
   const result = await dialog.showOpenDialog({
@@ -67,6 +70,32 @@ export async function exportReport(input: {
     XLSX.utils.book_append_sheet(wb, ws, 'Sales')
   }
 
+  if (input.type === 'stock') {
+    const stock = getStockReport()
+    const rows = stock.map((p) => ({
+      Product: p.name,
+      Category: p.category,
+      UnitType: p.unitType,
+      Price: p.defaultPrice,
+      Stock: p.stock,
+      LowStockThreshold: p.lowStockThreshold,
+      Status: p.stock <= 0 ? 'Out' : p.stock <= p.lowStockThreshold ? 'Low' : 'OK'
+    }))
+    const ws = XLSX.utils.json_to_sheet(rows)
+    XLSX.utils.book_append_sheet(wb, ws, 'Stock')
+  }
+
+  if (input.type === 'cash') {
+    const cash = getCashReport(input.from, input.to)
+    const rows = cash.map((c) => ({
+      Date: c.date,
+      Transactions: c.count,
+      CashCollected: c.total
+    }))
+    const ws = XLSX.utils.json_to_sheet(rows.length ? rows : [{ Date: '', Transactions: 0, CashCollected: 0 }])
+    XLSX.utils.book_append_sheet(wb, ws, 'Cash')
+  }
+
   const out = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' })
   try {
     writeFileSync(result.filePath, out)
@@ -84,4 +113,70 @@ export function registerBackupIpc(): void {
 
 export function getAppDataPath(): string {
   return app.getPath('userData')
+}
+
+// ---------- Auto-backup ----------
+
+const AUTO_BACKUP_PREFIX = 'pos-auto-'
+const AUTO_BACKUP_KEEP = 30
+
+function performAutoBackup(): string | null {
+  const src = getDbPath()
+  let destDir = getSetting('backupPath')
+  if (!destDir) {
+    destDir = join(app.getPath('userData'), 'backups')
+  }
+  if (!existsSync(destDir)) mkdirSync(destDir, { recursive: true })
+
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-')
+  const dest = join(destDir, `${AUTO_BACKUP_PREFIX}${stamp}.db`)
+  copyFileSync(src, dest)
+  pruneAutoBackups(destDir)
+  return dest
+}
+
+function pruneAutoBackups(dir: string): void {
+  try {
+    const files = readdirSync(dir)
+      .filter((f) => f.startsWith(AUTO_BACKUP_PREFIX) && f.endsWith('.db'))
+      .sort() // timestamp-based names sort chronologically
+    const excess = files.length - AUTO_BACKUP_KEEP
+    for (let i = 0; i < excess; i++) {
+      try {
+        unlinkSync(join(dir, files[i]))
+      } catch {
+        // ignore individual prune failures
+      }
+    }
+  } catch {
+    // ignore
+  }
+}
+
+let autoBackupTimer: NodeJS.Timeout | null = null
+
+export function startAutoBackup(): void {
+  const run = () => {
+    try {
+      if (getSetting('autoBackup') !== 'true') return
+      const dest = performAutoBackup()
+      if (dest) console.log('[backup] auto-backup written to', dest)
+    } catch (err) {
+      console.error('[backup] auto-backup failed:', err)
+    }
+  }
+
+  // First run ~1 min after launch (gives settings time to load), then daily.
+  setTimeout(run, 60_000)
+  autoBackupTimer = setInterval(run, 24 * 60 * 60 * 1000)
+
+  // React to settings toggles (autoBackup / backupPath changes).
+  ipcMain.on('settings-changed', run)
+}
+
+export function stopAutoBackup(): void {
+  if (autoBackupTimer) {
+    clearInterval(autoBackupTimer)
+    autoBackupTimer = null
+  }
 }

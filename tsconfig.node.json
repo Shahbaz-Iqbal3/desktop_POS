@@ -9,6 +9,8 @@
   ],
   "compilerOptions": {
     "composite": true,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
     "types": ["node", "better-sqlite3"],
     "baseUrl": ".",
     "paths": {

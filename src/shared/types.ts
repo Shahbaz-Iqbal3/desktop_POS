@@ -25,6 +25,20 @@ export type HeldCart = {
   heldAt: string
 }
 
+export type SaleReturn = {
+  id: string
+  saleId: string
+  branchId: string
+  tillId: string
+  shiftId: string | null
+  items: SaleItem[] // refunded items (subset of the original sale)
+  total: number // sum of refunded line totals
+  refundAmount: number
+  paymentMethod: PaymentMethod
+  createdAt: string // ISO string
+  synced: 0 | 1
+}
+
 export type Sale = {
   id: string
   branchId: string
@@ -104,12 +118,29 @@ export const SETTING_KEYS = {
   setupComplete: 'setupComplete',
   licenseKey: 'licenseKey',
   licenseExpiry: 'licenseExpiry',
-  machineId: 'machineId'
+  machineId: 'machineId',
+  shopId: 'shopId'
 } as const
 
 export type SettingKey = (typeof SETTING_KEYS)[keyof typeof SETTING_KEYS]
 
 export type Language = 'en' | 'ur'
+
+// Sync status type
+export type SyncStatus = {
+  isOnline: boolean
+  pendingCount: number
+  lastSyncTime: string | null
+  syncError: string | null
+  isSyncing: boolean
+}
+
+// Shop type
+export type Shop = {
+  id: string
+  name: string
+  accessToken: string
+}
 
 // IPC channel names — single source of truth shared with preload + main.
 export const IPC_CHANNELS = {
@@ -125,6 +156,11 @@ export const IPC_CHANNELS = {
   CREATE_SALE: 'pos:create-sale',
   GET_SALES: 'pos:get-sales',
   GET_LAST_SALE: 'pos:get-last-sale',
+  GET_SALE: 'pos:get-sale',
+
+  // Returns / refunds
+  CREATE_RETURN: 'pos:create-return',
+  GET_RETURNS: 'pos:get-returns',
 
   // Held carts (park/recall)
   HOLD_CART: 'pos:hold-cart',
@@ -153,6 +189,7 @@ export const IPC_CHANNELS = {
   GET_PRINTERS: 'printer:get-printers',
   PRINT_RECEIPT: 'printer:print-receipt',
   REPRINT_RECEIPT: 'printer:reprint-receipt',
+  PRINT_REFUND: 'printer:print-refund',
   PRINT_BARCODE_LABEL: 'printer:print-barcode-label',
 
   // License
@@ -168,9 +205,27 @@ export const IPC_CHANNELS = {
   LOG_ERROR: 'telemetry:log-error',
   SUBMIT_FEEDBACK: 'telemetry:submit-feedback',
 
+  // Branches / Tills
+  GET_BRANCHES: 'pos:get-branches',
+  CREATE_BRANCH: 'pos:create-branch',
+  GET_TILLS: 'pos:get-tills',
+  CREATE_TILL: 'pos:create-till',
+
   // Reports
   GET_DASHBOARD: 'reports:get-dashboard',
-  GET_SALES_REPORT: 'reports:get-sales-report'
+  GET_SALES_REPORT: 'reports:get-sales-report',
+
+  // Shop
+  GET_SHOP: 'shop:get',
+
+  // Sync
+  GET_SYNC_STATUS: 'sync:get-status',
+  TRIGGER_SYNC: 'sync:trigger-now',
+  RECONFIGURE_SYNC: 'sync:reconfigure'
+
+  // Auto-update (disabled for now)
+  // CHECK_UPDATES: 'updater:check',
+  // RESTART_AND_UPDATE: 'updater:restart'
 } as const
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS]

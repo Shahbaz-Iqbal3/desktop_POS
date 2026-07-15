@@ -1,5 +1,9 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Lock } from 'lucide-react'
+import { Button } from './ui/button'
+import { Textarea } from './ui/textarea'
+import { Label } from './ui/label'
 import type { useToasts } from '../hooks/useToasts'
 
 type Toasts = ReturnType<typeof useToasts>
@@ -40,45 +44,46 @@ export function LicenseLockout({
   }
 
   return (
-    <div className="wizard">
-      <div className="wizard-card">
-        <h2 style={{ color: 'var(--danger)', marginBottom: 8 }}>
-          🔒 License Expired
-        </h2>
-        <p style={{ color: 'var(--text-muted)', marginBottom: 20 }}>
+    <div className="min-h-screen flex items-center justify-center bg-slate-950 p-4">
+      <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-8 w-full max-w-md">
+        <div className="flex items-center gap-2 mb-2">
+          <Lock className="w-5 h-5 text-red-400" />
+          <h2 className="text-lg font-semibold text-red-400">License Expired</h2>
+        </div>
+        <p className="text-slate-400 text-sm mb-5">
           {t('license.expired', {
             date: 'expiry' in status ? new Date(status.expiry).toLocaleDateString() : ''
           })}
         </p>
 
-        <div className="form-row" style={{ gridTemplateColumns: '1fr' }}>
-          <label>{t('settings.licenseKey')}</label>
-          <textarea
-            className="form-input"
+        <div className="space-y-2">
+          <Label>{t('settings.licenseKey')}</Label>
+          <Textarea
             rows={3}
             placeholder="paste license key..."
             value={key}
             onChange={(e) => setKey(e.target.value)}
+            className="bg-slate-950 border-slate-700"
           />
         </div>
 
         {error && (
-          <p style={{ color: 'var(--danger)', fontSize: 13, marginTop: 8 }}>{error}</p>
+          <p className="text-red-400 text-[13px] mt-2">{error}</p>
         )}
 
-        <div className="modal-actions">
-          <button
-            className="btn btn-primary"
+        <div className="mt-5">
+          <Button
             onClick={handleActivate}
             disabled={submitting}
+            className="w-full bg-teal-500 text-teal-950 hover:bg-teal-400"
           >
             {submitting ? t('common.loading') : t('license.activate')}
-          </button>
+          </Button>
         </div>
 
-        <div style={{ marginTop: 24, padding: 12, background: 'var(--bg)', borderRadius: 6, fontSize: 12, color: 'var(--text-muted)' }}>
-          <p style={{ marginBottom: 4 }}>To get a license key:</p>
-          <ol style={{ paddingLeft: 20, lineHeight: 1.6 }}>
+        <div className="mt-6 p-3 bg-slate-950 rounded-md text-xs text-slate-400 leading-relaxed">
+          <p className="mb-1 font-medium text-slate-300">To get a license key:</p>
+          <ol className="list-decimal pl-5 space-y-1">
             <li>Send your Machine ID to your vendor</li>
             <li>They generate a signed key for your machine</li>
             <li>Paste it above and click Activate</li>

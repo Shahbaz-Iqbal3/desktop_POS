@@ -1,5 +1,5 @@
-// Local PostCSS config — overrides any parent config.
-// We use plain CSS (no Tailwind) in the renderer, so this is intentionally empty.
+// Local PostCSS config — Tailwind v4 is handled by the @tailwindcss/vite plugin,
+// so this is intentionally left empty (no PostCSS pipeline needed).
 export default {
   plugins: []
 }

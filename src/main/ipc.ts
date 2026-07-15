@@ -12,6 +12,9 @@ import {
   createSale,
   getSales,
   getLastSale,
+  getSale,
+  createReturn,
+  getReturns,
   holdCart,
   getHeldCarts,
   recallCart,
@@ -30,8 +33,14 @@ import {
   logError,
   submitFeedback,
   getDashboard,
-  getSalesReport
+  getSalesReport,
+  getShop,
+  getBranches,
+  getTills,
+  createBranch,
+  createTill
 } from './db'
+import { registerSyncIpc } from './sync'
 
 export function registerDbIpc(): void {
   // Products / categories
@@ -48,6 +57,17 @@ export function registerDbIpc(): void {
   ipcMain.handle('pos:create-sale', (_e, input) => createSale(input))
   ipcMain.handle('pos:get-sales', (_e, limit = 100) => getSales(limit))
   ipcMain.handle('pos:get-last-sale', () => getLastSale())
+  ipcMain.handle('pos:get-sale', (_e, id: string) => getSale(id))
+  ipcMain.handle('pos:create-return', (_e, input) => createReturn(input))
+  ipcMain.handle('pos:get-returns', (_e, limit = 100) => getReturns(limit))
+
+  // Branches / Tills
+  ipcMain.handle('pos:get-branches', () => getBranches())
+  ipcMain.handle('pos:create-branch', (_e, name: string) => createBranch(name))
+  ipcMain.handle('pos:get-tills', () => getTills())
+  ipcMain.handle('pos:create-till', (_e, name: string, branchId: string) =>
+    createTill(name, branchId)
+  )
 
   // Held carts
   ipcMain.handle('pos:hold-cart', (_e, label: string, items, total: number) => holdCart(label, items, total))
@@ -73,8 +93,14 @@ export function registerDbIpc(): void {
   // Settings
   ipcMain.handle('pos:get-settings', () => getSettings())
   ipcMain.handle('pos:get-setting', (_e, key: string) => getSetting(key))
-  ipcMain.handle('pos:set-setting', (_e, key: string, value: string) => setSetting(key, value))
-  ipcMain.handle('pos:set-settings', (_e, values) => setSettings(values))
+  ipcMain.handle('pos:set-setting', (_e, key: string, value: string) => {
+    setSetting(key, value)
+    ipcMain.emit('settings-changed')
+  })
+  ipcMain.handle('pos:set-settings', (_e, values) => {
+    setSettings(values)
+    ipcMain.emit('settings-changed')
+  })
 
   // Telemetry
   ipcMain.handle('telemetry:log-error', (_e, input) => {
@@ -91,4 +117,10 @@ export function registerDbIpc(): void {
   ipcMain.handle('reports:get-sales-report', (_e, from: string, to: string) =>
     getSalesReport(from, to)
   )
+
+  // Shop management
+  ipcMain.handle('shop:get', () => getShop())
+
+  // Register sync IPC handlers
+  registerSyncIpc()
 }

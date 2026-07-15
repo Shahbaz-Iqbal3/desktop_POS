@@ -14,6 +14,11 @@ asarUnpack:
   - resources/**
   - '**/*.{node,dll}'
 afterSign: build/notarize.js
+# --- Windows code signing ---
+# electron-builder auto-signs the Windows build when these env vars are present:
+#   CSC_LINK        -> path/URL to your Authenticode .pfx certificate
+#   CSC_KEY_PASSWORD-> certificate password
+# Leave them unset for unsigned local builds.
 win:
   target:
     - nsis
@@ -32,8 +37,12 @@ linux:
   target:
     - AppImage
   artifactName: ${productName}-${version}.${ext}
+# --- Auto-update publishing (GitHub Releases) ---
+# Owner/repo are read from env so the same config works across forks/CI.
+# Set GH_OWNER and GH_REPO before running `npm run package`. Leave them unset to
+# skip publishing (the installer is still built locally).
 publish:
   provider: github
-  owner: pos-team
-  repo: pos-app
+  owner: ${env.GH_OWNER}
+  repo: ${env.GH_REPO}
   releaseType: release
