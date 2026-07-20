@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#020617">
+<title>POS Dashboard</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./style.css">
+</head>
+<body>
+
+  <!-- Loading overlay -->
+  <div id="loading-overlay" class="loading-overlay" hidden>
+    <div class="spinner" aria-hidden="true"></div>
+    <p>Updating dashboard…</p>
+  </div>
+
+  <!-- Offline banner -->
+  <div id="offline-indicator" class="offline-indicator" hidden role="status">
+    <span class="offline-dot" aria-hidden="true"></span>
+    Offline — showing last synced data
+  </div>
+
+  <!-- ===================== LOGIN / PAIRING ===================== -->
+  <main id="login-screen" class="screen login-screen">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h18v10H3z"/><path d="M3 11h18"/><path d="M7 15h4"/></svg>
+      </div>
+      <h1>POS Dashboard</h1>
+      <p class="brand-sub">Pair with your till to see live sales, stock and products.</p>
+    </div>
+
+    <div class="card pairing-card">
+      <div id="scan-view" class="scan-view">
+        <div class="scan-frame">
+          <video id="scan-video" playsinline muted></video>
+          <div class="scan-reticle" aria-hidden="true">
+            <span class="corner tl"></span><span class="corner tr"></span>
+            <span class="corner bl"></span><span class="corner br"></span>
+            <span class="scan-line"></span>
+          </div>
+        </div>
+        <p id="scan-status" class="scan-status">Point the camera at the QR code shown in the desktop app.</p>
+        <button id="start-scan-btn" class="btn btn-primary" type="button">Turn on camera</button>
+      </div>
+
+      <div class="divider-dashed" role="separator">
+        <span>or paste the pairing code from desktop</span>
+      </div>
+
+      <form id="manual-pair-form" class="manual-pair">
+        <label for="pair-code">Pairing code</label>
+        <input id="pair-code" name="pair-code" inputmode="text" autocomplete="off"
+               placeholder="e.g. K7Q2-9M3P" maxlength="9">
+        <button type="submit" class="btn btn-primary">Connect</button>
+      </form>
+
+      <p id="pair-error" class="pair-error" hidden></p>
+      <p class="note">Codes expire 5 minutes after they're generated, for security.</p>
+    </div>
+
+    <p class="path-hint">Desktop App → Settings → Generate QR Code for Dashboard</p>
+  </main>
+
+  <!-- ===================== APP (dashboard + products) ===================== -->
+  <div id="app" class="screen app" hidden>
+
+    <header class="topbar">
+      <div class="topbar-main">
+        <h1 id="shop-name">Shop name</h1>
+        <div class="topbar-meta">
+          <span class="live-dot" aria-hidden="true"></span>
+          <span id="last-updated">Syncing…</span>
+        </div>
+      </div>
+      <button id="logout-btn" class="icon-btn" type="button" aria-label="Log out">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>
+      </button>
+    </header>
+
+    <nav class="tabbar" role="tablist">
+      <button id="tab-dashboard" class="tab active" type="button" role="tab" aria-selected="true">Dashboard</button>
+      <button id="tab-products" class="tab" type="button" role="tab" aria-selected="false">Products</button>
+    </nav>
+
+    <!-- ---------- DASHBOARD ---------- -->
+    <section id="view-dashboard" class="feed" role="tabpanel">
+
+      <!-- Today's sales + Cash in Till + Digital -->
+      <section class="card widget grid-2">
+        <div>
+          <h2 class="widget-title">Today's Sales</h2>
+          <div class="sales-hero compact">
+            <span class="currency-tag" id="shop-currency">Rs</span>
+            <span class="sales-amount" id="sales-total">0.00</span>
+          </div>
+          <div class="sales-sub compact">
+            <div class="sub-stat">
+              <span class="sub-value" id="sales-count">0</span>
+              <span class="sub-label">transactions</span>
+            </div>
+            <div class="sub-stat">
+              <span class="sub-value change" id="sales-change">0%</span>
+              <span class="sub-label">vs. yesterday</span>
+            </div>
+          </div>
+        </div>
+        <div>
+          <h2 class="widget-title">Cash in Till</h2>
+          <div class="sales-amount sm" id="cash-in-till">0.00</div>
+          <p class="muted-xs" id="cash-in-till-sub">opening 0.00</p>
+          <h2 class="widget-title mt">Digital</h2>
+          <div class="sales-amount sm" id="digital-total">0.00</div>
+          <p class="muted-xs" id="digital-pct">0% of total</p>
+        </div>
+      </section>
+
+      <!-- Best category + Top products -->
+      <section class="card widget grid-2">
+        <div>
+          <h2 class="widget-title">Best Category</h2>
+          <div class="sales-amount sm" id="best-category-name">—</div>
+          <p class="muted-xs" id="best-category-total">0.00</p>
+        </div>
+        <div>
+          <h2 class="widget-title">Top Products</h2>
+          <ol id="top-products" class="ranked-list">
+            <li class="empty-state">No sales yet</li>
+          </ol>
+        </div>
+      </section>
+
+      <!-- Hourly sales trend -->
+      <section class="card widget">
+        <h2 class="widget-title">Hourly Sales Trend</h2>
+        <div id="hourly-chart" class="chart-bars"></div>
+        <div class="chart-axis"><span>08:00</span><span>14:00</span><span>20:00</span></div>
+      </section>
+
+      <!-- Cash vs Digital -->
+      <section class="card widget">
+        <h2 class="widget-title">Cash vs Digital</h2>
+        <div class="donut-wrap">
+          <div id="cash-digital-donut" class="donut"></div>
+          <div class="donut-legend">
+            <div><span class="dot cash"></span>Cash <strong id="donut-cash">0.00</strong></div>
+            <div><span class="dot digital"></span>Digital <strong id="donut-digital">0.00</strong></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Payment methods -->
+      <section class="card widget">
+        <h2 class="widget-title">Payment Methods</h2>
+        <div id="payment-method" class="payment-methods">
+          <p class="empty-state">No sales yet today</p>
+        </div>
+      </section>
+
+      <!-- Inventory / low stock -->
+      <section class="card widget">
+        <div class="widget-title-row">
+          <h2 class="widget-title">Low Stock Alerts</h2>
+          <span id="low-stock-badge" class="badge badge-alert" hidden></span>
+        </div>
+        <div id="inventory-list" class="inventory-list">
+          <p class="empty-state">All products well stocked</p>
+        </div>
+      </section>
+
+      <!-- Recent transactions -->
+      <section class="card widget">
+        <h2 class="widget-title">Recent Transactions</h2>
+        <div id="recent-transactions" class="recent-transactions">
+          <p class="empty-state">No recent transactions</p>
+        </div>
+      </section>
+
+    </section>
+
+    <!-- ---------- PRODUCTS ---------- -->
+    <section id="view-products" class="feed" role="tabpanel" hidden>
+      <div class="row-between">
+        <input id="product-search" class="input" type="search" placeholder="Search products…" />
+        <button id="add-product-btn" class="btn btn-primary sm" type="button">+ Add</button>
+      </div>
+      <div id="product-list" class="product-list"></div>
+    </section>
+
+  </div>
+
+  <!-- ===================== MODALS ===================== -->
+  <div id="modal-root" class="modal-root" hidden>
+    <div class="modal-backdrop" data-close></div>
+    <div class="modal card" role="dialog" aria-modal="true">
+      <div id="modal-body"></div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" hidden role="alert"></div>
+
+  <!-- Supabase JS is loaded via a dynamic ESM import inside app.js (it only
+       ships as an ES module). jsQR is a classic global script for the scanner. -->
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+  <script type="module" src="app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').catch((err) => {
+          console.log('ServiceWorker registration failed:', err);
+        });
+      });
+    }
+  </script>
+</body>
+</html>
