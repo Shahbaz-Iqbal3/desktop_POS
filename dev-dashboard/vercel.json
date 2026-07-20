@@ -4,7 +4,7 @@
   "outputDirectory": "public",
   "functions": {
     "api/*.ts": {
-      "includeFiles": "views/**"
+      "includeFiles": "api/**"
     }
   },
   "rewrites": [
