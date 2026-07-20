@@ -21,7 +21,6 @@ async function loadStats() {
     document.getElementById('generatedAt').textContent = new Date(data.generatedAt).toLocaleString()
     renderGlobal(data.global)
     renderPerShop(data.perShop)
-    renderLowStock(data.lowStock)
   } catch (e) {
     showError(String(e.message || e))
   }
@@ -71,15 +70,6 @@ function renderPerShop(rows) {
       </td>
     </tr>`
   }).join('')
-}
-
-function renderLowStock(list) {
-  const el = document.getElementById('lowStock')
-  if (!list || list.length === 0) { el.innerHTML = '<div class="p-3 text-slate-500 text-sm">All products well stocked.</div>'; return }
-  el.innerHTML = list.map((i) => `<div class="p-3 flex items-center justify-between text-sm">
-    <span>${escapeHtml(i.shopName)} · <span class="text-slate-400">${escapeHtml(i.product)}</span></span>
-    <span class="stat text-red-400">${fmt(i.stock)} / ${fmt(i.threshold)}</span>
-  </div>`).join('')
 }
 
 function escapeHtml(s) {

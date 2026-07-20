@@ -77,7 +77,7 @@ export default async function handler(req: any, res: any) {
       name: '',
       currency: 'Rs',
       salesRows: 0, salesTodayRows: 0,
-      products: 0, activeProducts: 0, lowStock: 0,
+      products: 0, activeProducts: 0,
       movements: 0, returnsRows: 0
     })
     const byShop = new Map<string, any>()
@@ -95,7 +95,7 @@ export default async function handler(req: any, res: any) {
     const globalAgg = {
       shops: shops.length,
       salesRows: 0, salesTodayRows: 0,
-      products: 0, activeProducts: 0, lowStock: 0,
+      products: 0, activeProducts: 0,
       stockMovements: movements.length,
       returnsRows: returns.length,
       refundTotal: 0,
@@ -114,25 +114,9 @@ export default async function handler(req: any, res: any) {
       if (p.active === 1 || p.active === true) { sh.activeProducts += 1; globalAgg.activeProducts += 1 }
     }
 
-    // low stock + per-shop movement counts
-    const stockByProduct = new Map<string, number>()
+    // per-shop movement counts
     for (const m of movements) {
-      const key = `${m.shop_id}::${m.product_id}`
-      stockByProduct.set(key, (stockByProduct.get(key) || 0) + (Number(m.change_amount) || 0))
       ensure(m.shop_id).movements += 1
-    }
-    const thresholdByProduct = new Map<string, { shop: string; threshold: number; name: string }>()
-    for (const p of products) {
-      thresholdByProduct.set(p.id, { shop: p.shop_id, threshold: Number(p.low_stock_threshold) || 0, name: p.name })
-    }
-    const lowStockList: any[] = []
-    for (const [pid, info] of thresholdByProduct) {
-      const stock = stockByProduct.get(`${info.shop}::${pid}`) || 0
-      if (stock < info.threshold) {
-        const sh = ensure(info.shop)
-        sh.lowStock += 1; globalAgg.lowStock += 1
-        lowStockList.push({ shopId: info.shop, shopName: shopName.get(info.shop) || info.shop, product: info.name, stock, threshold: info.threshold })
-      }
     }
 
     for (const r of returns) {
@@ -154,8 +138,7 @@ export default async function handler(req: any, res: any) {
     res.status(200).json({
       generatedAt: new Date().toISOString(),
       global: globalAgg,
-      perShop,
-      lowStock: lowStockList.sort((a, b) => a.stock - b.stock)
+      perShop
     })
   } catch (e: any) {
     res.status(500).json({ error: String(e?.message || e) })
