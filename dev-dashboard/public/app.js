@@ -1,7 +1,6 @@
 'use strict'
 
 const fmt = (n) => (typeof n === 'number' ? n.toLocaleString(undefined, { maximumFractionDigits: 0 }) : '0')
-const money = (n, cur = 'Rs') => `${cur} ${fmt(n)}`
 
 function showError(msg) {
   const el = document.getElementById('error')
@@ -19,6 +18,7 @@ async function loadStats() {
       throw new Error(j.error || `Stats request failed (${res.status})`)
     }
     const data = await res.json()
+    document.getElementById('generatedAt').textContent = new Date(data.generatedAt).toLocaleString()
     renderGlobal(data.global)
     renderPerShop(data.perShop)
     renderLowStock(data.lowStock)
@@ -40,27 +40,37 @@ function renderGlobal(g) {
   if (!g) { el.innerHTML = ''; return }
   el.innerHTML = [
     card('Shops', fmt(g.shops)),
-    card('Sales (all)', money(g.salesAll), `${fmt(g.salesAllCount)} sales`),
-    card('Sales (today)', money(g.salesToday), `${fmt(g.salesTodayCount)} sales`),
-    card('Cash / Digital', money(g.cashAll), `dig ${money(g.digitalAll)}`),
+    card('Total data rows', fmt(g.totalRows), 'sales+products+movements+returns'),
+    card('Sales rows', fmt(g.salesRows), `${fmt(g.salesTodayRows)} today`),
     card('Products', fmt(g.products), `${fmt(g.activeProducts)} active`),
-    card('Low stock', fmt(g.lowStock), 'below threshold'),
     card('Stock movements', fmt(g.stockMovements)),
-    card('Returns', fmt(g.returns), `ref ${money(g.refundTotal)}`)
+    card('Returns', fmt(g.returnsRows), `ref ${fmt(g.refundTotal)}`),
+    card('Low stock', fmt(g.lowStock), 'below threshold'),
+    card('Avg rows / shop', fmt(g.shops ? Math.round(g.totalRows / g.shops) : 0))
   ].join('')
 }
 
 function renderPerShop(rows) {
   const tb = document.getElementById('perShop')
-  if (!rows || rows.length === 0) { tb.innerHTML = '<tr><td colspan="6" class="p-3 text-slate-500">No shops found.</td></tr>'; return }
-  tb.innerHTML = rows.map((s) => `<tr class="hover:bg-slate-800/50">
-    <td class="p-3 font-medium">${escapeHtml(s.name)}</td>
-    <td class="p-3 text-right stat">${money(s.salesAll, s.currency)}</td>
-    <td class="p-3 text-right stat">${money(s.salesToday, s.currency)}</td>
-    <td class="p-3 text-right stat text-xs">${money(s.cashAll, s.currency)} / ${money(s.digitalAll, s.currency)}</td>
-    <td class="p-3 text-right stat">${fmt(s.products)} <span class="text-slate-500">(${fmt(s.activeProducts)})</span></td>
-    <td class="p-3 text-right stat ${s.lowStock > 0 ? 'text-red-400' : 'text-emerald-400'}">${fmt(s.lowStock)}</td>
-  </tr>`).join('')
+  if (!rows || rows.length === 0) { tb.innerHTML = '<tr><td colspan="7" class="p-3 text-slate-500">No shops found.</td></tr>'; return }
+  const total = rows.reduce((a, s) => a + s.totalRows, 0) || 1
+  tb.innerHTML = rows.map((s) => {
+    const pct = ((s.totalRows / total) * 100).toFixed(1)
+    return `<tr class="hover:bg-slate-800/50">
+      <td class="p-3 font-medium">${escapeHtml(s.name)}</td>
+      <td class="p-3 text-right stat">${fmt(s.salesRows)}</td>
+      <td class="p-3 text-right stat">${fmt(s.products)}</td>
+      <td class="p-3 text-right stat">${fmt(s.movements)}</td>
+      <td class="p-3 text-right stat">${fmt(s.returnsRows)}</td>
+      <td class="p-3 text-right stat">${fmt(s.totalRows)}</td>
+      <td class="p-3">
+        <div class="flex items-center gap-2">
+          <div class="bar flex-1"><span style="width:${pct}%"></span></div>
+          <span class="stat text-xs text-slate-400 w-12 text-right">${pct}%</span>
+        </div>
+      </td>
+    </tr>`
+  }).join('')
 }
 
 function renderLowStock(list) {
@@ -113,17 +123,21 @@ document.getElementById('verifyBtn').addEventListener('click', async () => {
     const key = document.getElementById('verifyKey').value.trim()
     const machineId = document.getElementById('verifyMachine').value.trim()
     const parts = key.split('.')
-    if (parts.length !== 2) throw new Error('Malformed license key')
+    if (parts.length !== 2) throw new Error('Malformed license key (expected payload.signature)')
     const [payloadB64, sigB64] = parts
-    const payloadJson = new TextDecoder().decode(b64urlToBytes(payloadB64))
+    const payloadJson = new TextDecoder().decode(b64ToBytes(payloadB64))
 
-    const { pub } = await fetch('/api/license-pubkey').then((r) => r.json())
+    const pkRes = await fetch('/api/license-pubkey')
+    if (!pkRes.ok) throw new Error('Could not load public key')
+    const { publicKey: pub } = await pkRes.json()
+    if (!pub) throw new Error('Server missing LICENSE_PUBLIC_KEY')
+
     const keyObj = await crypto.subtle.importKey('spki', b64ToBytes(pub), 'Ed25519', true, ['verify'])
-    const ok = await crypto.subtle.verify('Ed25519', keyObj, b64urlToBytes(sigB64), new TextEncoder().encode(payloadJson))
+    const ok = await crypto.subtle.verify('Ed25519', keyObj, b64ToBytes(sigB64), new TextEncoder().encode(payloadJson))
 
     let payload = {}
     try { payload = JSON.parse(payloadJson) } catch {}
-    const expectedHash = await sha256Hex(machineId)
+    const expectedHash = machineId ? await sha256Hex(machineId) : ''
     const machineOk = !machineId || payload.m === expectedHash
 
     out.className = 'block text-xs bg-slate-900 border rounded-md p-2 ' + (ok && machineOk ? 'border-emerald-700 text-emerald-300' : 'border-red-700 text-red-300')
@@ -140,11 +154,11 @@ document.getElementById('verifyBtn').addEventListener('click', async () => {
   }
 })
 
-function b64urlToBytes(s) {
-  return b64ToBytes(s.replace(/-/g, '+').replace(/_/g, '/'))
-}
+// Robust base64/base64url -> bytes: normalizes url-safe chars and pads.
 function b64ToBytes(b64) {
-  const bin = atob(b64)
+  let s = String(b64).replace(/-/g, '+').replace(/_/g, '/')
+  while (s.length % 4) s += '='
+  const bin = atob(s)
   const bytes = new Uint8Array(bin.length)
   for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i)
   return bytes

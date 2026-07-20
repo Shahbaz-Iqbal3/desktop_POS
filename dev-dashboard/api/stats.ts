@@ -3,6 +3,19 @@
 // Never expose any key to the browser. Aggregates in JS keyed by shop_id.
 import { createClient } from '@supabase/supabase-js'
 
+// --- Silence the Supabase "native WebSocket not found" banner. ---
+// We only use the REST client (no realtime subscriptions), so a stub global
+// WebSocket is enough to satisfy supabase-js on Node < 22 without adding `ws`.
+if (typeof (globalThis as any).WebSocket === 'undefined') {
+  ;(globalThis as any).WebSocket = class {
+    constructor() { /* never instantiated: we don't open realtime sockets */ }
+    close() {}
+    addEventListener() {}
+    removeEventListener() {}
+    send() {}
+  } as any
+}
+
 const SUPABASE_URL = process.env.SUPABASE_URL
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
 
@@ -54,7 +67,7 @@ export default async function handler(req: any, res: any) {
       fetchAll('returns', 'shop_id, refund_amount')
     ])
 
-    // --- Aggregate ---
+    // --- Aggregate (technical / dev view: row counts + DB distribution) ---
     const startOfDay = new Date()
     startOfDay.setHours(0, 0, 0, 0)
     const todayIso = startOfDay.toISOString()
@@ -63,10 +76,9 @@ export default async function handler(req: any, res: any) {
       shopId: '',
       name: '',
       currency: 'Rs',
-      salesAll: 0, salesAllCount: 0,
-      salesToday: 0, salesTodayCount: 0,
-      cashAll: 0, digitalAll: 0,
-      products: 0, activeProducts: 0, lowStock: 0
+      salesRows: 0, salesTodayRows: 0,
+      products: 0, activeProducts: 0, lowStock: 0,
+      movements: 0, returnsRows: 0
     })
     const byShop = new Map<string, any>()
     const ensure = (id: string) => {
@@ -82,23 +94,18 @@ export default async function handler(req: any, res: any) {
 
     const globalAgg = {
       shops: shops.length,
-      salesAll: 0, salesAllCount: 0,
-      salesToday: 0, salesTodayCount: 0,
-      cashAll: 0, digitalAll: 0,
+      salesRows: 0, salesTodayRows: 0,
       products: 0, activeProducts: 0, lowStock: 0,
       stockMovements: movements.length,
-      returns: returns.length,
-      refundTotal: 0
+      returnsRows: returns.length,
+      refundTotal: 0,
+      totalRows: 0
     }
 
     for (const s of sales) {
       const sh = ensure(s.shop_id)
-      const total = Number(s.total) || 0
-      sh.salesAll += total; sh.salesAllCount += 1
-      globalAgg.salesAll += total; globalAgg.salesAllCount += 1
-      if (s.payment_method === 'cash') { sh.cashAll += total; globalAgg.cashAll += total }
-      else { sh.digitalAll += total; globalAgg.digitalAll += total }
-      if (s.created_at >= todayIso) { sh.salesToday += total; sh.salesTodayCount += 1; globalAgg.salesToday += total; globalAgg.salesTodayCount += 1 }
+      sh.salesRows += 1; globalAgg.salesRows += 1
+      if (s.created_at >= todayIso) { sh.salesTodayRows += 1; globalAgg.salesTodayRows += 1 }
     }
 
     for (const p of products) {
@@ -107,11 +114,12 @@ export default async function handler(req: any, res: any) {
       if (p.active === 1 || p.active === true) { sh.activeProducts += 1; globalAgg.activeProducts += 1 }
     }
 
-    // low stock: sum movements per product, compare to threshold per shop
+    // low stock + per-shop movement counts
     const stockByProduct = new Map<string, number>()
     for (const m of movements) {
       const key = `${m.shop_id}::${m.product_id}`
       stockByProduct.set(key, (stockByProduct.get(key) || 0) + (Number(m.change_amount) || 0))
+      ensure(m.shop_id).movements += 1
     }
     const thresholdByProduct = new Map<string, { shop: string; threshold: number; name: string }>()
     for (const p of products) {
@@ -129,12 +137,19 @@ export default async function handler(req: any, res: any) {
 
     for (const r of returns) {
       const sh = ensure(r.shop_id)
+      sh.returnsRows += 1; globalAgg.returnsRows += 1
       const amt = Number(r.refund_amount) || 0
       sh.refunds = (sh.refunds || 0) + amt
       globalAgg.refundTotal += amt
     }
 
-    const perShop = Array.from(byShop.values()).sort((a, b) => b.salesAll - a.salesAll)
+    // total rows across all tables (DB footprint proxy)
+    globalAgg.totalRows = globalAgg.salesRows + globalAgg.products + globalAgg.stockMovements + globalAgg.returnsRows
+    for (const sh of byShop.values()) {
+      sh.totalRows = sh.salesRows + sh.products + sh.movements + sh.returnsRows
+    }
+
+    const perShop = Array.from(byShop.values()).sort((a, b) => b.totalRows - a.totalRows)
 
     res.status(200).json({
       generatedAt: new Date().toISOString(),
