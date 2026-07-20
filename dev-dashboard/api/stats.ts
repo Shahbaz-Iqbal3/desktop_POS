@@ -2,6 +2,7 @@
 // Reads all-shops stats from Supabase using the SERVICE ROLE key (server-side only).
 // Never expose any key to the browser. Aggregates in JS keyed by shop_id.
 import { createClient } from '@supabase/supabase-js'
+import { requireBasicAuth } from './auth'
 
 // --- Silence the Supabase "native WebSocket not found" banner. ---
 // We only use the REST client (no realtime subscriptions), so a stub global
@@ -24,6 +25,7 @@ export default async function handler(req: any, res: any) {
     res.status(405).json({ error: 'Method not allowed' })
     return
   }
+  if (!requireBasicAuth(req, res)) return
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
     res.status(500).json({ error: 'Server misconfigured: SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY env vars missing.' })
     return

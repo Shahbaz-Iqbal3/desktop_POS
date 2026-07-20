@@ -17,8 +17,10 @@ access server-side.
 
 ## Security
 
-- Deployed behind **Vercel Password Protection** (or Vercel Auth) — set it in the
-  Vercel dashboard (Project → Settings → Deployment Protection).
+- **Vercel Deployment Protection (Password/Vercel Auth) is Pro/Enterprise only.**
+  On the Hobby plan we gate the whole app with **HTTP Basic Auth** via
+  `DASHBOARD_PASSWORD` (username `admin`). Every request — the page and all
+  `/api/*` routes — is checked in `api/auth.ts`. Set it as a Vercel env var.
 - `api/license.ts` additionally requires `LICENSE_SIGN_SECRET` in the `x-sign-secret`
   header, so minting keys is doubly gated.
 - All secrets are **Vercel Environment Variables** (encrypted). Nothing secret is
@@ -36,6 +38,7 @@ Set these in Vercel (Project → Settings → Environment Variables), Production
 | `LICENSE_PRIVATE_KEY` | Base64 of the Ed25519 **private** key (`license-keys.json` → `privateKey`). |
 | `LICENSE_PUBLIC_KEY` | Base64 SPKI of the Ed25519 **public** key (`src/main/license.ts` → `PUBLIC_KEY`). |
 | `LICENSE_SIGN_SECRET` | A strong random secret used to gate license generation. |
+| `DASHBOARD_PASSWORD` | HTTP Basic Auth password for the whole dashboard (username `admin`). |
 
 > The license keypair is generated once by `scripts/license-keygen.ts` and stored in
 > `license-keys.json` (gitignored). Paste its `privateKey`/`publicKey` base64 into the

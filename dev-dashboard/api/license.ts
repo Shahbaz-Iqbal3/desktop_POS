@@ -3,6 +3,7 @@
 // LICENSE_PRIVATE_KEY env var (Vercel secret), never in the browser/repo.
 // Extra gate: caller must send the LICENSE_SIGN_SECRET in the `x-sign-secret` header.
 import crypto from 'crypto'
+import { requireBasicAuth } from './auth'
 
 const TIER_DAYS: Record<string, number> = { '1y': 365, '2y': 730, '5y': 1825 }
 
@@ -15,6 +16,7 @@ export default async function handler(req: any, res: any) {
     res.status(405).json({ error: 'Method not allowed' })
     return
   }
+  if (!requireBasicAuth(req, res)) return
 
   const signSecret = process.env.LICENSE_SIGN_SECRET
   const provided = req.headers['x-sign-secret'] || ''
