@@ -7,7 +7,7 @@ import { requireBasicAuth } from './auth'
 export default function handler(req: any, res: any) {
   if (!requireBasicAuth(req, res)) return
   try {
-    const html = readFileSync(join(__dirname, 'index.html'), 'utf8')
+    const html = readFileSync(join(__dirname, 'dashboard.html'), 'utf8')
     res.setHeader('Content-Type', 'text/html; charset=utf-8')
     res.status(200).send(html)
   } catch (e: any) {
