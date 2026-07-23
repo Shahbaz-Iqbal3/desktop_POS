@@ -28,7 +28,7 @@
   <!-- Loading overlay -->
   <div id="loading-overlay" class="loading-overlay" hidden>
     <div class="spinner" aria-hidden="true"></div>
-    <p>Updating dashboard…</p>
+    <p>Loading…</p>
   </div>
 
   <!-- Offline banner -->
@@ -112,6 +112,10 @@
       <button id="tab-products" class="tab" type="button" role="tab" aria-selected="false">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="M3.3 7 12 12l8.7-5"/><path d="M12 22V12"/></svg>
         Products
+      </button>
+      <button id="tab-purchases" class="tab" type="button" role="tab" aria-selected="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        Purchases
       </button>
     </nav>
 
@@ -217,6 +221,16 @@
         <button id="add-product-btn" class="btn btn-primary sm" type="button">+ Add</button>
       </div>
       <div id="product-list" class="product-list"></div>
+    </section>
+
+    <!-- ---------- PURCHASES ---------- -->
+    <section id="view-purchases" class="feed" role="tabpanel" hidden>
+      <div class="row-between">
+        <input id="purchase-search" class="input" type="search" placeholder="Search purchase items…" />
+        <button id="add-purchase-btn" class="btn btn-primary sm" type="button">+ Add</button>
+      </div>
+      <div id="purchase-list" class="purchase-list"></div>
+      <p id="purchase-empty" class="empty-state" style="text-align:center;margin-top:2rem;">No items in purchase todo</p>
     </section>
 
   </div>

@@ -58,14 +58,16 @@
 
 -- ---------- shops (one row per installed shop) ----------
 create table if not exists public.shops (
-  id           text primary key,
-  name         text not null,
-  currency     text not null default 'Rs',
-  access_token text not null unique,
-  pairing_code text unique,
-  pairing_code_expires_at timestamptz,
-  created_at   timestamptz not null default now(),
-  updated_at   timestamptz not null default now()
+   id           text primary key,
+   name         text not null,
+   currency     text not null default 'Rs',
+   access_token text not null unique,
+   pairing_code text unique,
+   pairing_code_expires_at timestamptz,
+   user_id uuid,
+   auth_password text,
+   created_at   timestamptz not null default now(),
+   updated_at   timestamptz not null default now()
 );
 
 -- NOTE: the pairing_code index is created in the MIGRATIONS block below (after
@@ -253,9 +255,87 @@ alter table public.shops           add column if not exists updated_at timestamp
 alter table public.shops           add column if not exists currency    text        not null default 'Rs';
 alter table public.shops           add column if not exists pairing_code text;
 alter table public.shops           add column if not exists pairing_code_expires_at timestamptz;
+alter table public.shops           add column if not exists user_id uuid;
+alter table public.shops           add column if not exists auth_password text;
 
 -- Indexes that depend on columns added above (safe to re-run).
 create index if not exists idx_shops_pairing on public.shops (pairing_code);
+create index if not exists idx_shops_user on public.shops (user_id);
+
+-- Push subscriptions for low-stock notifications
+create table if not exists public.push_subscriptions (
+  id bigserial primary key,
+  shop_id text not null references public.shops(id),
+  subscription jsonb not null,
+  created_at timestamptz not null default now()
+);
+create index if not exists idx_push_subscriptions_shop on public.push_subscriptions (shop_id);
+
+alter table public.push_subscriptions enable row level security;
+
+drop policy if exists "service_role_bypass" on public.push_subscriptions;
+create policy "service_role_bypass" on public.push_subscriptions for all using (auth.role() = 'service_role');
+
+-- PWA can only read its own shop's subscriptions
+drop policy if exists "shop_own_subscriptions" on public.push_subscriptions;
+create policy "shop_own_subscriptions" on public.push_subscriptions for select
+  using (shop_id = (select id from public.shops where user_id = auth.uid()::text));
+
+-- Function to get low-stock products for a shop
+create or replace function public.get_low_stock_products()
+returns table (
+  product_id text,
+  product_name text,
+  category_name text,
+  stock int,
+  threshold int,
+  shop_id text
+) language plpgsql stable as $$
+declare
+  _shop_id text;
+begin
+  -- If called by service_role, get all shops' low stock; otherwise filter by current user's shop
+  if auth.role() = 'service_role' then
+    return query
+      with stock_calc as (
+        select
+          p.id as product_id,
+          p.name as product_name,
+          c.name as category_name,
+          coalesce(sum(sm.change_amount), 0)::int as stock,
+          p.low_stock_threshold as threshold,
+          p.shop_id
+        from public.products p
+        left join public.categories c on c.id = p.category_id
+        left join public.stock_movements sm on sm.product_id = p.id
+        where p.active = 1 and p.low_stock_threshold > 0
+        group by p.id, p.name, c.name, p.low_stock_threshold, p.shop_id
+      )
+      select product_id, product_name, category_name, stock, threshold, shop_id
+      from stock_calc
+      where stock <= threshold;
+  else
+    return query
+      with stock_calc as (
+        select
+          p.id as product_id,
+          p.name as product_name,
+          c.name as category_name,
+          coalesce(sum(sm.change_amount), 0)::int as stock,
+          p.low_stock_threshold as threshold,
+          p.shop_id
+        from public.products p
+        left join public.categories c on c.id = p.category_id
+        left join public.stock_movements sm on sm.product_id = p.id
+        where p.active = 1 and p.low_stock_threshold > 0 and p.shop_id = (select id from public.shops where user_id = auth.uid()::text)
+        group by p.id, p.name, c.name, p.low_stock_threshold, p.shop_id
+      )
+      select product_id, product_name, category_name, stock, threshold, shop_id
+      from stock_calc
+      where stock <= threshold;
+  end if;
+end;
+$$;
 
 -- Maintain `updated_at` server-side so it is the authoritative clock for
 -- last-write-wins conflict resolution, regardless of client clock skew.
@@ -313,11 +393,6 @@ alter table public.shifts         enable row level security;
 alter table public.error_logs     enable row level security;
 alter table public.feedback       enable row level security;
 
--- Permissive policies for the anon key. The app always includes `shop_id` in
--- every insert/select, so data is separated at the query layer.
--- SECURITY TRADE-OFF: anyone with the anon key (shipped in the app) can read /
--- write any shop's rows. For stronger isolation use a backend proxy with the
--- service_role key that validates shop_id, or require authenticated users.
 drop policy if exists "anon_all_shops"         on public.shops;
 drop policy if exists "anon_all_branches"      on public.branches;
 drop policy if exists "anon_all_tills"         on public.tills;
@@ -330,14 +405,54 @@ drop policy if exists "anon_all_shifts"        on public.shifts;
 drop policy if exists "anon_all_error_logs"    on public.error_logs;
 drop policy if exists "anon_all_feedback"      on public.feedback;
 
-create policy "anon_all_shops"         on public.shops         for all using (true) with check (true);
-create policy "anon_all_branches"      on public.branches      for all using (true) with check (true);
-create policy "anon_all_tills"         on public.tills         for all using (true) with check (true);
-create policy "anon_all_categories"    on public.categories    for all using (true) with check (true);
-create policy "anon_all_products"      on public.products      for all using (true) with check (true);
-create policy "anon_all_stock"         on public.stock_movements for all using (true) with check (true);
-create policy "anon_all_sales"         on public.sales         for all using (true) with check (true);
-create policy "anon_all_returns"       on public.returns       for all using (true) with check (true);
-create policy "anon_all_shifts"        on public.shifts        for all using (true) with check (true);
-create policy "anon_all_error_logs"    on public.error_logs    for all using (true) with check (true);
-create policy "anon_all_feedback"      on public.feedback      for all using (true) with check (true);
+drop policy if exists "service_role_bypass"    on public.shops;
+drop policy if exists "service_role_bypass"    on public.branches;
+drop policy if exists "service_role_bypass"    on public.tills;
+drop policy if exists "service_role_bypass"    on public.categories;
+drop policy if exists "service_role_bypass"    on public.products;
+drop policy if exists "service_role_bypass"    on public.stock_movements;
+drop policy if exists "service_role_bypass"    on public.sales;
+drop policy if exists "service_role_bypass"    on public.returns;
+drop policy if exists "service_role_bypass"    on public.shifts;
+drop policy if exists "service_role_bypass"    on public.error_logs;
+drop policy if exists "service_role_bypass"    on public.feedback;
+
+drop policy if exists "shop_own_data"          on public.shops;
+drop policy if exists "shop_own_data"          on public.branches;
+drop policy if exists "shop_own_data"          on public.tills;
+drop policy if exists "shop_own_data"          on public.categories;
+drop policy if exists "shop_own_data"          on public.products;
+drop policy if exists "shop_own_data"          on public.stock_movements;
+drop policy if exists "shop_own_data"          on public.sales;
+drop policy if exists "shop_own_data"          on public.returns;
+drop policy if exists "shop_own_data"          on public.shifts;
+drop policy if exists "shop_own_data"          on public.error_logs;
+drop policy if exists "shop_own_data"          on public.feedback;
+
+-- Desktop sync uses service_role key and bypasses RLS entirely.
+create policy "service_role_bypass" on public.shops         for all using (auth.role() = 'service_role');
+create policy "service_role_bypass" on public.branches      for all using (auth.role() = 'service_role');
+create policy "service_role_bypass" on public.tills         for all using (auth.role() = 'service_role');
+create policy "service_role_bypass" on public.categories    for all using (auth.role() = 'service_role');
+create policy "service_role_bypass" on public.products      for all using (auth.role() = 'service_role');
+create policy "service_role_bypass" on public.stock_movements for all using (auth.role() = 'service_role');
+create policy "service_role_bypass" on public.sales         for all using (auth.role() = 'service_role');
+create policy "service_role_bypass" on public.returns       for all using (auth.role() = 'service_role');
+create policy "service_role_bypass" on public.shifts        for all using (auth.role() = 'service_role');
+create policy "service_role_bypass" on public.error_logs    for all using (auth.role() = 'service_role');
+create policy "service_role_bypass" on public.feedback      for all using (auth.role() = 'service_role');
+
+-- PWA (authenticated shop user): each user can only access rows for their shop.
+create policy "shop_own_data" on public.branches      for all using (shop_id = (select id from public.shops where user_id = auth.uid()));
+create policy "shop_own_data" on public.tills         for all using (shop_id = (select id from public.shops where user_id = auth.uid()));
+create policy "shop_own_data" on public.categories    for all using (shop_id = (select id from public.shops where user_id = auth.uid()));
+create policy "shop_own_data" on public.products      for all using (shop_id = (select id from public.shops where user_id = auth.uid()));
+create policy "shop_own_data" on public.stock_movements for all using (shop_id = (select id from public.shops where user_id = auth.uid()));
+create policy "shop_own_data" on public.sales         for all using (shop_id = (select id from public.shops where user_id = auth.uid()));
+create policy "shop_own_data" on public.returns       for all using (shop_id = (select id from public.shops where user_id = auth.uid()));
+create policy "shop_own_data" on public.shifts        for all using (shop_id = (select id from public.shops where user_id = auth.uid()));
+create policy "shop_own_data" on public.error_logs    for all using (shop_id = (select id from public.shops where user_id = auth.uid()));
+create policy "shop_own_data" on public.feedback      for all using (shop_id = (select id from public.shops where user_id = auth.uid()));
+
+create policy "shop_own_record" on public.shops for select
+  using (user_id = auth.uid());

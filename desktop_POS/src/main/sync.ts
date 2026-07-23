@@ -9,10 +9,11 @@
 // shim electron-vite already injects for better-sqlite3 and xlsx.
 import { createRequire } from 'node:module'
 import { ipcMain } from 'electron'
-import { getShop, getShopPairingCodeWithExpiry, getProducts, getCategories, getUnsyncedRows, markAsSynced, getSyncedIds, resetSynced, getPendingSyncCount, getLastSyncPull, setLastSyncPull, upsertSyncedRow } from './db'
-import { SUPABASE_URL, SUPABASE_ANON_KEY, isSupabaseConfigured } from './supabase-config'
+import { getShop, getShopPairingCodeWithExpiry, getProducts, getCategories, getUnsyncedRows, markAsSynced, getSyncedIds, resetSynced, getPendingSyncCount, getLastSyncPull, setLastSyncPull, upsertSyncedRow, updateShopUserId, updateShopAuthPassword } from './db'
+import { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, isSupabaseServiceRoleConfigured } from './supabase-config'
 
 const require = createRequire(import.meta.url)
+const crypto = require('crypto')
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { createClient } = require('@supabase/supabase-js') as typeof import('@supabase/supabase-js')
 
@@ -63,7 +64,7 @@ function camelKeysToSnake<T extends Record<string, unknown>>(obj: T): Record<str
   return result;
 }
 
-let supabaseClient: ReturnType<typeof createClient> | null = null
+let supabaseAdmin: ReturnType<typeof createClient> | null = null
 let syncInterval: NodeJS.Timeout | null = null
 let isOnline = true
 let lastSyncTime: string | null = null
@@ -90,30 +91,22 @@ function notifyStatus(): void {
   ipcMain.emit('sync:status-changed', currentSyncStatus)
 }
 
-function initSupabase(): void {
-  if (!isSupabaseConfigured()) {
-    supabaseClient = null
-    console.warn('[sync] Supabase not configured — set SUPABASE_URL / SUPABASE_ANON_KEY (see supabase-config.ts)')
+function initSupabaseAdmin(): void {
+  if (!isSupabaseServiceRoleConfigured()) {
+    supabaseAdmin = null
+    console.warn('[sync] No service_role key configured — set SUPABASE_SERVICE_ROLE_KEY')
     return
   }
 
   try {
-    // We only use REST inserts for sync (no realtime subscriptions), but
-    // supabase-js still constructs a RealtimeClient at init time. In Electron's
-    // bundled Node (pre-22) there is no native WebSocket, so RealtimeClient's
-    // `getWebSocketConstructor()` throws
-    // "Node.js detected but native WebSocket not found."
-    // Supplying a `transport` short-circuits that lookup (see realtime-js
-    // RealtimeClient line: transport = options.transport ?? getWebSocketConstructor()),
-    // and since we never open a channel the stub is never actually connected.
-    supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
       realtime: { transport: NoopWebSocket as never },
       auth: { persistSession: false, autoRefreshToken: false }
     })
-    console.log('[sync] Supabase client initialized')
+    console.log('[sync] Admin Supabase client initialized')
   } catch (err) {
-    console.error('[sync] Failed to initialize Supabase client:', err)
-    supabaseClient = null
+    console.error('[sync] Failed to initialize admin client:', err)
+    supabaseAdmin = null
   }
 }
 
@@ -121,26 +114,71 @@ function initSupabase(): void {
 // The local shop_id is generated once in db.ts initDatabase, so every shop
 // installation has a stable, unique id that separates its rows in Supabase.
 async function registerShop(): Promise<void> {
-  if (!supabaseClient) return
+  if (!supabaseAdmin) return
   const shop = getShop()
   if (!shop) return
   try {
     const info = getShopPairingCodeWithExpiry()
-    // pairing_code is nullable until the user explicitly generates one, so only
-    // include it in the upsert when present (avoids sending null to a column
-    // that may still be NOT NULL on older cloud schemas).
     const row: Record<string, unknown> = {
       id: shop.id,
       name: shop.name,
       access_token: shop.accessToken,
       created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
     }
     if (info?.code) {
       row.pairing_code = info.code
       row.pairing_code_expires_at = info.expiresAt
     }
-    await supabaseClient.from('shops').upsert(row as any)
+
+    // Ensure a Supabase Auth user exists for this shop. Prefer the value
+    // already synced to the cloud, then fall back to local, to avoid
+    // creating duplicate users when a shop previously synced on another install.
+    let userId = shop.userId
+    let authPassword = ''
+    if (!userId) {
+      const tempPassword = crypto.randomUUID()
+      const { data: { user: userData }, error: authErr } = await supabaseAdmin.auth.admin.createUser({
+        email: `shop-${shop.id}@internal.pos`,
+        password: tempPassword,
+        email_confirm: true,
+      })
+      if (authErr || !userData) {
+        console.error('[sync] Failed to create auth user for shop:', authErr)
+        return
+      }
+      userId = userData.id
+      authPassword = tempPassword
+      updateShopUserId(shop.id, userId)
+      updateShopAuthPassword(shop.id, authPassword)
+      console.log('[sync] Created auth user for shop:', shop.id, 'userId:', userId)
+    } else {
+      const { data: existingShop, error: lookErr } = await supabaseAdmin
+        .from('shops')
+        .select('auth_password')
+        .eq('id', shop.id)
+        .maybeSingle()
+      const shopRow = existingShop as Record<string, string | null> | null
+      if (!lookErr && shopRow && shopRow.auth_password) {
+        authPassword = shopRow.auth_password
+      } else {
+        authPassword = crypto.randomUUID()
+        updateShopAuthPassword(shop.id, authPassword)
+      }
+      // Always ensure Supabase Auth password matches the stored auth_password
+      const { error: pwdErr } = await supabaseAdmin.auth.admin.updateUserById(userId, {
+        password: authPassword,
+      })
+      if (pwdErr) {
+        console.error('[sync] Failed to update auth password:', pwdErr)
+      } else {
+        console.log('[sync] Synced auth password for user:', userId)
+      }
+    }
+    row.user_id = userId
+    row.auth_password = authPassword
+
+    await supabaseAdmin.from('shops').upsert(row as any)
     console.log('[sync] Shop registered in Supabase:', shop.id)
   } catch (err) {
     console.error('[sync] Failed to register shop:', err)
@@ -152,12 +190,12 @@ async function registerShop(): Promise<void> {
 // and can enforce expiry. The local SQLite value is the source of truth; this
 // keeps the cloud in sync. Returns whether the push succeeded.
 export async function pushShopPairingCode(): Promise<{ ok: boolean; error?: string }> {
-  if (!supabaseClient) return { ok: false, error: 'Supabase not connected' }
+  if (!supabaseAdmin) return { ok: false, error: 'Supabase not connected' }
   const shop = getShop()
   const info = getShopPairingCodeWithExpiry()
   if (!shop || !info || !info.code) return { ok: false, error: 'No shop or pairing code' }
   try {
-    const { error } = await supabaseClient
+    const { error } = await supabaseAdmin
       .from('shops')
       .upsert({
         id: shop.id,
@@ -165,6 +203,8 @@ export async function pushShopPairingCode(): Promise<{ ok: boolean; error?: stri
         access_token: shop.accessToken,
         pairing_code: info.code,
         pairing_code_expires_at: info.expiresAt,
+        user_id: shop.userId,
+        auth_password: shop.authPassword,
         updated_at: new Date().toISOString()
       } as any)
     if (error) return { ok: false, error: String(error.message || error) }
@@ -198,7 +238,7 @@ function updateOnlineStatus(online: boolean): void {
 // missing ones to synced=0 so the next push re-sends them. No network call is made
 // when there are no synced rows to check.
 async function reconcileSyncedRows(): Promise<number> {
-  if (!supabaseClient) return 0
+  if (!supabaseAdmin) return 0
   const shop = getShop()
   if (!shop) return 0
 
@@ -210,7 +250,7 @@ async function reconcileSyncedRows(): Promise<number> {
     if (localSynced.length === 0) continue
 
     try {
-      const { data, error } = await supabaseClient
+      const { data, error } = await supabaseAdmin
         .from(table)
         .select('id')
         .eq('shop_id', shop.id)
@@ -237,7 +277,7 @@ async function syncTable(
   tableName: 'sales' | 'stock_movements' | 'returns' | 'error_logs' | 'feedback',
   rows: Array<{ id: string; data: Record<string, unknown> }>
 ): Promise<{ success: number; failed: number }> {
-  if (!supabaseClient || rows.length === 0) {
+  if (!supabaseAdmin || rows.length === 0) {
     return { success: 0, failed: 0 }
   }
 
@@ -254,7 +294,7 @@ async function syncTable(
       shop_id: shop.id
     }))
 
-    const { error } = await supabaseClient
+    const { error } = await supabaseAdmin
       .from(tableName)
       .insert(rowsWithShop as any)
 
@@ -279,7 +319,7 @@ async function syncTable(
 // upsert the full set each sync rather than tracking a per-row `synced` flag.
 // Cloud columns match the local snake_case columns (see supabase-schema.sql).
 async function syncCatalog(): Promise<{ success: number; failed: number }> {
-  if (!supabaseClient) return { success: 0, failed: 0 }
+  if (!supabaseAdmin) return { success: 0, failed: 0 }
   const shop = getShop()
   if (!shop) return { success: 0, failed: 0 }
 
@@ -308,9 +348,9 @@ async function syncCatalog(): Promise<{ success: number; failed: number }> {
     }))
 
     let failed = 0
-    const { error: prodErr } = await supabaseClient.from('products').upsert(products as any)
+    const { error: prodErr } = await supabaseAdmin.from('products').upsert(products as any)
     if (prodErr) { console.error('[sync] Failed to sync products:', prodErr); failed += products.length }
-    const { error: catErr } = await supabaseClient.from('categories').upsert(categories as any)
+    const { error: catErr } = await supabaseAdmin.from('categories').upsert(categories as any)
     if (catErr) { console.error('[sync] Failed to sync categories:', catErr); failed += categories.length }
 
     const total = products.length + categories.length
@@ -325,14 +365,14 @@ async function syncCatalog(): Promise<{ success: number; failed: number }> {
 // Pull cloud changes newer than our last-sync watermark and merge them locally
 // using last-write-wins (products/categories) or append-only (stock_movements).
 async function pullChanges(): Promise<void> {
-  if (!supabaseClient) return
+  if (!supabaseAdmin) return
   const shop = getShop()
   if (!shop) return
 
   const since = getLastSyncPull() ?? '1970-01-01T00:00:00.000Z'
   try {
     for (const table of ['products', 'categories', 'stock_movements'] as const) {
-      const { data, error } = await supabaseClient
+      const { data, error } = await supabaseAdmin
         .from(table)
         .select('*')
         .eq('shop_id', shop.id)
@@ -352,7 +392,7 @@ async function pullChanges(): Promise<void> {
 }
 
 async function triggerSync(): Promise<void> {
-  if (!supabaseClient) {
+  if (!supabaseAdmin) {
     console.log('[sync] No Supabase client, skipping sync')
     return
   }
@@ -411,6 +451,20 @@ async function triggerSync(): Promise<void> {
       syncError = syncError ?? `Failed to sync catalog (${catalogResult.failed})`
     }
 
+    // 4) Trigger low-stock push notifications
+    try {
+      const { error: pushErr } = await supabaseAdmin.functions.invoke('send-low-stock', {
+        body: {}
+      })
+      if (pushErr) {
+        console.warn('[sync] Low-stock push failed:', pushErr.message)
+      } else {
+        console.log('[sync] Low-stock push triggered')
+      }
+    } catch (e) {
+      console.warn('[sync] Low-stock push error:', e)
+    }
+
     lastSyncTime = new Date().toISOString()
     currentSyncStatus.lastSyncTime = lastSyncTime
     currentSyncStatus.syncError = syncError
@@ -428,11 +482,11 @@ async function triggerSync(): Promise<void> {
 export function startSyncEngine(): void {
   console.log('[sync] Starting sync engine')
 
-  // Initialize Supabase client
-  initSupabase()
+  // Initialize Supabase admin client
+  initSupabaseAdmin()
 
   // Register this shop + run an initial sync (after shop is known to cloud)
-  if (supabaseClient) {
+  if (supabaseAdmin) {
     void registerShop().then(() => {
       currentSyncStatus.pendingCount = getPendingSyncCount()
       if (isOnline) void triggerSync()
@@ -462,7 +516,7 @@ export function startSyncEngine(): void {
 
   // Set up automatic sync every 3 minutes
   syncInterval = setInterval(() => {
-    if (isOnline && supabaseClient) {
+    if (isOnline && supabaseAdmin) {
       void triggerSync()
     }
   }, 3 * 60 * 1000) // 3 minutes
@@ -478,8 +532,8 @@ export function stopSyncEngine(): void {
 
 export function reconfigureSync(): void {
   console.log('[sync] Reconfiguring sync')
-  initSupabase()
-  if (supabaseClient) {
+  initSupabaseAdmin()
+  if (supabaseAdmin) {
     void registerShop()
   }
   currentSyncStatus.pendingCount = getPendingSyncCount()

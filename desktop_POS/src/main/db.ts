@@ -93,7 +93,9 @@ function createSchema(): void {
       pairing_code TEXT UNIQUE,
       pairing_code_expires_at TEXT,
       created_at TEXT NOT NULL,
-      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      user_id TEXT,
+      auth_password TEXT
     );
 
     CREATE TABLE IF NOT EXISTS branches (
@@ -339,6 +341,14 @@ function migrateShopPairingCode(): void {
     if (!pragma2.some(col => col.name === 'pairing_code_expires_at')) {
       console.log('[db] Adding pairing_code_expires_at column to shops')
       db.exec('ALTER TABLE shops ADD COLUMN pairing_code_expires_at TEXT')
+    }
+    if (!pragma2.some(col => col.name === 'user_id')) {
+      console.log('[db] Adding user_id column to shops')
+      db.exec('ALTER TABLE shops ADD COLUMN user_id TEXT')
+    }
+    if (!pragma2.some(col => col.name === 'auth_password')) {
+      console.log('[db] Adding auth_password column to shops')
+      db.exec('ALTER TABLE shops ADD COLUMN auth_password TEXT')
     }
   } catch (err) {
     console.warn('[db] Migration (shops.pairing_code) failed:', err)
@@ -1403,11 +1413,19 @@ export function submitFeedback(input: { message: string; rating?: number }): voi
 
 // ---------- Reports ----------
 
-export function getShop(): { id: string; name: string; accessToken: string } | null {
+export function updateShopAuthPassword(shopId: string, password: string): void {
+  db.prepare('UPDATE shops SET auth_password = ? WHERE id = ?').run(password, shopId)
+}
+
+export function updateShopUserId(shopId: string, userId: string): void {
+  db.prepare('UPDATE shops SET user_id = ? WHERE id = ?').run(userId, shopId)
+}
+
+export function getShop(): { id: string; name: string; accessToken: string; userId: string | null; authPassword: string | null } | null {
   const shopId = getSetting('shopId')
   if (!shopId) return null
   const row = db.prepare('SELECT * FROM shops WHERE id = ?').get(shopId) as Record<string, unknown> | undefined
-  return row ? mapRow<{ id: string; name: string; accessToken: string }>(row) : null
+  return row ? mapRow<{ id: string; name: string; accessToken: string; userId: string | null; authPassword: string | null }>(row) : null
 }
 
 export function getDashboard(range: 'today' | '7d' | '30d' = 'today'): {

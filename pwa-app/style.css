@@ -497,7 +497,21 @@ button { font-family: inherit; }
   display: flex; align-items: center; justify-content: center;
 }
 .product-card .pc-actions button:active { background: var(--surface-2); }
+.product-card .pc-actions .act-purchase:hover { color: var(--teal); border-color: rgba(45,212,191,0.4); }
 .product-card .pc-actions .del:hover { color: var(--red); border-color: rgba(248,113,113,0.4); }
+
+/* ---------- purchases ---------- */
+.purchase-list { display: flex; flex-direction: column; gap: .6rem; }
+.purchase-card {
+  background: var(--card-bg); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: .85rem .9rem;
+  display: flex; flex-direction: column; gap: .65rem;
+}
+.pc-header { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+.pc-name { font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+.pc-meta { font-size: .78rem; color: var(--text-soft); font-family: var(--font-mono); }
+.pc-actions { display: flex; gap: .45rem; }
+.pc-actions .btn { width: auto; min-height: 34px; padding: .45rem .7rem; font-size: .8rem; flex: 1; }
 
 /* ---------- modal ---------- */
 .modal-root { position: fixed; inset: 0; z-index: 80; display: flex; align-items: center; justify-content: center; padding: 1rem; }

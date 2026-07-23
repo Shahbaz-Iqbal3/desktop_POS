@@ -5,6 +5,9 @@
 // ---- Configuration -------------------------------------------------
 const SUPABASE_URL = 'https://wmwnlcqhbfcclqzyunhg.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indtd25sY3FoYmZjY2xxenl1bmhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwNDM1NTYsImV4cCI6MjA5OTYxOTU1Nn0.XTze6Fx_CajG9KpMcaOo4_tVxMrN0mW54NrR_0T8-QI';
+const EDGE_FUNCTION_URL = `${new URL(SUPABASE_URL).origin}/functions/v1/pair`;
+const PUSH_SUBSCRIBE_URL = `${new URL(SUPABASE_URL).origin}/functions/v1/push-subscribe`;
+const VAPID_PUBLIC_KEY = 'BHD2zHRO1BjJ3YHzEIU8qzIykibhq21qm8JS2L17fdglt_lggc5jvzPlvTBWixKL9ukOQMUEYq766dE-TCct0gE'; // Replace with your VAPID public key
 const REFRESH_INTERVAL_MS = 30 * 1000;       // fallback poll if realtime drops
 
 // @supabase/supabase-js only ships as an ES module, so we import it dynamically
@@ -27,8 +30,26 @@ async function loadSupabase() {
   throw lastErr || new Error('Supabase failed to load');
 }
 
-const createClient = await loadSupabase();
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let createClientFn = null;
+let supabase = null;
+
+async function ensureSupabaseLoaded() {
+  if (!createClientFn) {
+    createClientFn = await loadSupabase();
+  }
+}
+
+async function initSupabaseWithToken(accessToken) {
+  await ensureSupabaseLoaded();
+  supabase = createClientFn(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    global: {
+      headers: {
+        Authorization: `Bearer ${accessToken}`
+      }
+    },
+    auth: { persistSession: false, autoRefreshToken: false }
+  });
+}
 
 // Pairing code format: XXXX-XXXX (uppercase, Crockford-ish alphabet).
 const PAIR_CODE_RE = /^[A-Z2-9]{4}-[A-Z2-9]{4}$/;
@@ -44,23 +65,81 @@ function parsePairingUrl(raw) {
   }
 }
 
-// Look up the shop for a pairing code via Supabase. Rejects expired codes so an
-// old QR / stale code can't be reused after PAIRING_CODE_TTL_MINUTES.
-async function resolveCodeToShop(code) {
-  const { data, error } = await supabase
-    .from('shops')
-    .select('id, name, currency, pairing_code_expires_at')
-    .eq('pairing_code', code)
-    .maybeSingle();
-  if (error || !data) return null;
-  if (data.pairing_code_expires_at) {
-    const expiresAt = new Date(data.pairing_code_expires_at).getTime();
-    if (expiresAt <= Date.now()) return null;
+// Validates the pairing code via the `pair` Edge Function (server-side) and
+// returns a shop-scoped session JWT plus shop metadata. The PWA no longer
+// reads `shops` with the anon key — RLS on the cloud blocks it.
+async function pairWithEdgeFunction(code) {
+  try {
+    const response = await fetch(EDGE_FUNCTION_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code })
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result.error || `Pairing failed (status ${response.status})`);
+    }
+    return result;
+  } catch (err) {
+    console.error('Pairing via Edge Function failed:', err);
+    throw err;
   }
-  return data;
 }
 
-// ---- State -----------------------------------------------------------
+// ---- Push Notifications --------------------------------------------------
+let swRegistration = null;
+
+async function initPushNotifications() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    console.log('Push notifications not supported');
+    return;
+  }
+  if (Notification.permission === 'denied') return;
+
+  swRegistration = await navigator.serviceWorker.ready;
+
+  // Check existing subscription
+  let subscription = await swRegistration.pushManager.getSubscription();
+  if (!subscription) {
+    // Request permission
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') return;
+    // Subscribe
+    subscription = await swRegistration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+    });
+  }
+
+  // Send subscription to backend
+  await sendSubscriptionToBackend(subscription);
+}
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
+async function sendSubscriptionToBackend(subscription) {
+  try {
+    await fetch(PUSH_SUBSCRIBE_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${supabase.auth.getSession().then(s => s.data.session?.access_token)}`
+      },
+      body: JSON.stringify({ subscription: subscription.toJSON() })
+    });
+  } catch (err) {
+    console.error('Failed to send push subscription:', err);
+  }
+}
 let shopId = null;
 let shopCurrency = 'Rs';
 let pollTimer = null;
@@ -157,8 +236,11 @@ function init() {
   // Tabs
   el('tab-dashboard').addEventListener('click', () => switchTab('dashboard'));
   el('tab-products').addEventListener('click', () => switchTab('products'));
+  el('tab-purchases').addEventListener('click', () => switchTab('purchases'));
   el('add-product-btn').addEventListener('click', openProductModal);
   el('product-search').addEventListener('input', (e) => renderProductList(e.target.value));
+  el('purchase-search').addEventListener('input', (e) => renderPurchaseList(e.target.value));
+  el('add-purchase-btn').addEventListener('click', openAddPurchaseModal);
 
   // Modal close
   el('modal-root').addEventListener('click', (e) => {
@@ -175,7 +257,17 @@ function init() {
   const storedShopId = sessionStorage.getItem('shopId');
   if (storedShopId) {
     shopId = storedShopId;
-    initializeApp();
+    ensureSupabaseLoaded()
+      .then(() => {
+        supabase = createClientFn(SUPABASE_URL, SUPABASE_ANON_KEY, {
+          auth: { persistSession: true, autoRefreshToken: true }
+        });
+        return initializeApp();
+      })
+      .then(() => initPushNotifications())
+      .catch(() => {
+        logout();
+      });
   } else {
     loginScreen.hidden = false;
     appEl.hidden = true;
@@ -195,13 +287,19 @@ function showApp() {
 
 function switchTab(tab) {
   const isDash = tab === 'dashboard';
+  const isProd = tab === 'products';
+  const isPur = tab === 'purchases';
   el('view-dashboard').hidden = !isDash;
-  el('view-products').hidden = isDash;
+  el('view-products').hidden = !isProd;
+  el('view-purchases').hidden = !isPur;
   el('tab-dashboard').classList.toggle('active', isDash);
-  el('tab-products').classList.toggle('active', !isDash);
+  el('tab-products').classList.toggle('active', isProd);
+  el('tab-purchases').classList.toggle('active', isPur);
   el('tab-dashboard').setAttribute('aria-selected', String(isDash));
-  el('tab-products').setAttribute('aria-selected', String(!isDash));
-  if (!isDash) loadProducts();
+  el('tab-products').setAttribute('aria-selected', String(isProd));
+  el('tab-purchases').setAttribute('aria-selected', String(isPur));
+  if (isProd) loadProducts();
+  if (isPur) renderPurchaseList(el('purchase-search').value);
 }
 
 // ============================================================
@@ -274,16 +372,27 @@ async function handleManualPair(code) {
     return;
   }
   showPairError('');
+  showLoading();
   try {
-    const shop = await resolveCodeToShop(code);
-    if (!shop) {
-      showPairError('That pairing code is not valid or has expired. Generate a new code on the desktop app (codes expire after 5 minutes).');
-      return;
-    }
-    connect(shop.id, code);
+    const result = await pairWithEdgeFunction(code);
+    await ensureSupabaseLoaded();
+    supabase = createClientFn(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: { persistSession: true, autoRefreshToken: true }
+    });
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: result.email,
+      password: result.password,
+    });
+    if (error) throw error;
+    hideLoading();
+    shopId = result.shop.id;
+    sessionStorage.setItem('shopId', shopId);
+    initializeApp();
+    initPushNotifications();
   } catch (err) {
+    hideLoading();
     console.error('Pairing lookup failed:', err);
-    showPairError('Could not verify the code. Check your connection and try again.');
+    showPairError('That pairing code is not valid or has expired. Generate a new code on the desktop app (codes expire after 5 minutes).');
   }
 }
 
@@ -310,7 +419,15 @@ function connect(id, code) {
 async function initializeApp() {
   try {
     const { data: shop, error } = await supabase.from('shops').select('name, currency').eq('id', shopId).single();
-    if (error) throw error;
+    if (error) {
+      const status = error.status || error.code;
+      if (status === 401 || String(error.message || '').includes('JWT')) {
+        showToast('Session expired. Please scan the QR code again.');
+        logout();
+        return;
+      }
+      throw error;
+    }
 
     shopCurrency = shop.currency || 'Rs';
     shopNameEl.textContent = shop.name;
@@ -430,6 +547,12 @@ async function loadDashboardData({ initial = false } = {}) {
     hideLoading();
     lastUpdatedEl.textContent = 'Update failed — will retry';
     console.error('Data loading error:', error);
+    const status = error.status || error.code;
+    if (status === 401 || String(error.message || '').includes('JWT')) {
+      showToast('Session expired. Please scan the QR code again.');
+      logout();
+      return;
+    }
     showToast('Could not refresh data: ' + error.message);
   }
 }
@@ -515,12 +638,16 @@ function renderProductList(query) {
         <button class="act-edit" title="Edit" aria-label="Edit">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
         </button>
+        <button class="act-purchase" title="Move to purchase todo" aria-label="Move to purchase">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        </button>
         <button class="del" title="Delete" aria-label="Delete">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
         </button>
       </div>`;
     card.querySelector('.act-stock').addEventListener('click', () => openStockModal(p));
     card.querySelector('.act-edit').addEventListener('click', () => openProductModal(p));
+    card.querySelector('.act-purchase').addEventListener('click', () => openMoveToPurchaseModal(p));
     card.querySelector('.del').addEventListener('click', () => confirmDeleteProduct(p));
     list.appendChild(card);
   });
@@ -742,6 +869,40 @@ function openStockModal(p) {
   });
 }
 
+function openMoveToPurchaseModal(p) {
+  openModal(`
+    <h3>Move to Purchase Todo</h3>
+    <p class="muted-xs">Add <strong>${escapeHtml(p.name)}</strong> to your purchase todo list.</p>
+    <div class="form-row">
+      <div class="form-field">
+        <label>Quantity to purchase</label>
+        <input id="p-move-qty" type="number" min="1" step="1" value="1" />
+      </div>
+      <div class="form-field">
+        <label>Unit price</label>
+        <input id="p-move-price" type="number" min="0" step="0.01" value="${escapeAttr(p.default_price || '0')}" />
+      </div>
+    </div>
+    <div id="p-move-error" class="pair-error" hidden></div>
+    <div class="modal-actions">
+      <button class="btn ghost" data-close>Cancel</button>
+      <button class="btn btn-primary" id="p-move-save">Add to todo</button>
+    </div>
+  `);
+  el('p-move-save').addEventListener('click', () => {
+    const qty = parseInt(el('p-move-qty').value, 10);
+    const price = parseFloat(el('p-move-price').value);
+    const errEl = el('p-move-error');
+    if (!qty || qty <= 0) { errEl.textContent = 'Enter a quantity > 0.'; errEl.hidden = false; return; }
+    if (isNaN(price) || price < 0) { errEl.textContent = 'Enter a valid price.'; errEl.hidden = false; return; }
+    const todo = loadPurchaseTodo();
+    todo.push({ id: crypto.randomUUID(), name: p.name, qty, unitPrice: price, categoryId: p.category_id || '', createdAt: new Date().toISOString() });
+    savePurchaseTodo(todo);
+    closeModal();
+    showToast('Added to purchase todo');
+  });
+}
+
 // ---- Modal helpers ----
 function openModal(html) {
   el('modal-body').innerHTML = html;
@@ -897,7 +1058,7 @@ function escapeHtml(str) {
   return d.innerHTML;
 }
 function escapeAttr(str) {
-  return String(str ?? '').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return String(str ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 function showLoading() { loadingOverlay.hidden = false; }
 function hideLoading() { loadingOverlay.hidden = true; }
@@ -914,11 +1075,219 @@ function logout() {
   teardownRealtimeSubscriptions();
   if (pollTimer) clearInterval(pollTimer);
   sessionStorage.removeItem('shopId');
+  sessionStorage.removeItem('accessToken');
+  sessionStorage.removeItem('pairCode');
   shopId = null;
+  supabase = null;
   showLoginScreen();
 }
 
-logoutBtn.addEventListener('click', logout);
+// ============================================================
+// Purchases — local-storage todo list + inventory integration
+// ============================================================
+const PURCHASE_LS_KEY = 'pos-purchase-todo';
+
+function loadPurchaseTodo() {
+  try {
+    return JSON.parse(localStorage.getItem(PURCHASE_LS_KEY) || '[]');
+  } catch {
+    return [];
+  }
+}
+function savePurchaseTodo(items) {
+  try { localStorage.setItem(PURCHASE_LS_KEY, JSON.stringify(items)); } catch {}
+}
+
+function renderPurchaseList(query) {
+  const list = el('purchase-list');
+  const emptyEl = el('purchase-empty');
+  const q = (query || '').trim().toLowerCase();
+  const items = loadPurchaseTodo().filter((p) => !q || (p.name || '').toLowerCase().includes(q));
+  list.innerHTML = '';
+  if (items.length === 0) { emptyEl.hidden = false; return; }
+  emptyEl.hidden = true;
+  items.forEach((item) => {
+    const card = document.createElement('div');
+    card.className = 'purchase-card';
+    card.innerHTML = `
+      <div class="pc-header">
+        <div>
+          <div class="pc-name">${escapeHtml(item.name)}</div>
+          <div class="pc-meta">${fmt(parseFloat(item.qty || 0))} units · ${fmt(parseFloat(item.unitPrice || 0))} each</div>
+        </div>
+      </div>
+      <div class="pc-actions">
+        <button class="btn btn-primary sm purchase-btn-purchased" data-id="${escapeAttr(item.id)}">Purchased</button>
+        <button class="btn ghost sm purchase-btn-cancel" data-id="${escapeAttr(item.id)}">Cancel</button>
+      </div>`;
+    card.querySelector('.purchase-btn-purchased').addEventListener('click', () => openPurchasedModal(item));
+    card.querySelector('.purchase-btn-cancel').addEventListener('click', () => cancelPurchaseItem(item.id));
+    list.appendChild(card);
+  });
+}
+
+function openAddPurchaseModal() {
+  const catOptions = categoryCache.map((c) => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
+  openModal(`
+    <h3>Add Purchase Todo</h3>
+    <div class="form-field">
+      <label>Product name</label>
+      <input id="p-add-name" placeholder="e.g. Raw fabric roll" />
+    </div>
+    <div class="form-row">
+      <div class="form-field">
+        <label>Category</label>
+        <select id="p-add-cat">${catOptions || '<option value="">— none —</option>'}</select>
+      </div>
+      <div class="form-field">
+        <label>Unit price</label>
+        <input id="p-add-price" type="number" min="0" step="0.01" value="0" />
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-field">
+        <label>Quantity</label>
+        <input id="p-add-qty" type="number" min="1" step="1" value="1" />
+      </div>
+    </div>
+    <div id="p-add-error" class="pair-error" hidden></div>
+    <div class="modal-actions">
+      <button class="btn ghost" data-close>Cancel</button>
+      <button class="btn btn-primary" id="p-add-save">Add to todo</button>
+    </div>
+  `);
+  el('p-add-save').addEventListener('click', () => {
+    const name = el('p-add-name').value.trim();
+    const price = parseFloat(el('p-add-price').value);
+    const qty = parseInt(el('p-add-qty').value, 10);
+    const categoryId = el('p-add-cat').value;
+    const errEl = el('p-add-error');
+    if (!name) { errEl.textContent = 'Name is required.'; errEl.hidden = false; return; }
+    if (isNaN(price) || price < 0) { errEl.textContent = 'Enter a valid price.'; errEl.hidden = false; return; }
+    if (!qty || qty <= 0) { errEl.textContent = 'Enter a quantity > 0.'; errEl.hidden = false; return; }
+    const todo = loadPurchaseTodo();
+    todo.push({ id: crypto.randomUUID(), name, qty, unitPrice: price, categoryId, createdAt: new Date().toISOString() });
+    savePurchaseTodo(todo);
+    closeModal();
+    renderPurchaseList();
+    showToast('Added to purchase todo');
+  });
+}
+
+function cancelPurchaseItem(id) {
+  const todo = loadPurchaseTodo().filter((x) => x.id !== id);
+  savePurchaseTodo(todo);
+  renderPurchaseList(el('purchase-search').value);
+}
+
+function openPurchasedModal(item) {
+  openModal(`
+    <h3>Mark as Purchased</h3>
+    <p class="muted-xs">Update inventory with the purchased stock. If the product already exists, its stock will be increased.</p>
+    <div class="form-field">
+      <label>Product name</label>
+      <input id="p-purchased-name" value="${escapeAttr(item.name)}" />
+    </div>
+    <div class="form-row">
+      <div class="form-field">
+        <label>Quantity</label>
+        <input id="p-purchased-qty" type="number" min="1" step="1" value="${escapeAttr(String(item.qty || 1))}" />
+      </div>
+      <div class="form-field">
+        <label>Unit price</label>
+        <input id="p-purchased-price" type="number" min="0" step="0.01" value="${escapeAttr(String(item.unitPrice || 0))}" />
+      </div>
+    </div>
+    <div class="form-field">
+      <label>Category</label>
+      <select id="p-purchased-cat">
+        <option value="">— none —</option>
+        ${categoryCache.map((c) => `<option value="${c.id}" ${c.id === item.categoryId ? 'selected' : ''}>${escapeHtml(c.name)}</option>`).join('')}
+      </select>
+    </div>
+    <div id="p-purchased-error" class="pair-error" hidden></div>
+    <div class="modal-actions">
+      <button class="btn ghost" data-close>Cancel</button>
+      <button class="btn btn-primary" id="p-purchased-save">Save to inventory</button>
+    </div>
+  `);
+  el('p-purchased-save').addEventListener('click', async () => {
+    const name = el('p-purchased-name').value.trim();
+    const qty = parseInt(el('p-purchased-qty').value, 10);
+    const price = parseFloat(el('p-purchased-price').value);
+    const categoryId = el('p-purchased-cat').value;
+    const categoryName = (categoryCache.find((c) => c.id === categoryId) || {}).name || categoryId || '';
+    const errEl = el('p-purchased-error');
+    if (!name) { errEl.textContent = 'Name is required.'; errEl.hidden = false; return; }
+    if (!qty || qty <= 0) { errEl.textContent = 'Quantity must be > 0.'; errEl.hidden = false; return; }
+    if (isNaN(price) || price < 0) { errEl.textContent = 'Enter a valid price.'; errEl.hidden = false; return; }
+    try {
+      el('p-purchased-save').disabled = true;
+      const existing = productCache.find((p) => p.name.toLowerCase() === name.toLowerCase() && p.shop_id === shopId);
+      if (existing) {
+        const { error } = await supabase.from('products').update({
+          default_price: price,
+          category_id: categoryId || existing.category_id,
+          updated_at: new Date().toISOString(),
+        }).eq('id', existing.id).eq('shop_id', shopId);
+        if (error) throw error;
+        await supabase.from('stock_movements').insert({
+          id: crypto.randomUUID(),
+          shop_id: shopId,
+          product_id: existing.id,
+          category: categoryName || existing.category_id,
+          change_amount: qty,
+          reason: 'purchase',
+          created_at: new Date().toISOString(),
+          synced: 0,
+          updated_at: new Date().toISOString(),
+        });
+      } else {
+        const pid = crypto.randomUUID();
+        const now = new Date().toISOString();
+        const { error } = await supabase.from('products').upsert({
+          id: pid,
+          shop_id: shopId,
+          name,
+          category_id: categoryId || '',
+          unit_type: 'piece',
+          default_price: price,
+          default_discount: 0,
+          low_stock_threshold: 5,
+          sku: '',
+          barcode: '',
+          image_path: null,
+          active: 1,
+          created_at: now,
+          updated_at: now,
+        });
+        if (error) throw error;
+        await supabase.from('stock_movements').insert({
+          id: crypto.randomUUID(),
+          shop_id: shopId,
+          product_id: pid,
+          category: categoryName || categoryId || '',
+          change_amount: qty,
+          reason: 'purchase',
+          created_at: new Date().toISOString(),
+          synced: 0,
+          updated_at: new Date().toISOString(),
+        });
+      }
+      const todo = loadPurchaseTodo().filter((x) => x.id !== item.id);
+      savePurchaseTodo(todo);
+      closeModal();
+      showToast('Purchase saved to inventory');
+      await refreshStockCache();
+      renderPurchaseList(el('purchase-search').value);
+    } catch (err) {
+      console.error('purchased save failed:', err);
+      errEl.textContent = 'Save failed: ' + err.message;
+      errEl.hidden = false;
+      el('p-purchased-save').disabled = false;
+    }
+  });
+}
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', init);
 } else {
