@@ -3,8 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#020617">
+<meta name="theme-color" content="#020617" id="theme-color-meta">
 <title>POS Dashboard</title>
+<script>
+  // Applied before the stylesheet paints anything, so there's no flash
+  // of the wrong theme on load.
+  (function () {
+    try {
+      var saved = localStorage.getItem('pos-theme');
+      if (saved === 'light') document.documentElement.setAttribute('data-theme', 'light');
+    } catch (e) {}
+  })();
+</script>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -28,6 +38,8 @@
 
   <!-- ===================== LOGIN / PAIRING ===================== -->
   <main id="login-screen" class="screen login-screen">
+    <button id="theme-toggle-login" class="icon-btn theme-toggle-floating" type="button" aria-label="Switch to light theme" aria-pressed="false"></button>
+
     <div class="brand">
       <div class="brand-mark" aria-hidden="true">
         <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h18v10H3z"/><path d="M3 11h18"/><path d="M7 15h4"/></svg>
@@ -38,8 +50,12 @@
 
     <div class="card pairing-card">
       <div id="scan-view" class="scan-view">
-        <div class="scan-frame">
+        <div id="scan-frame" class="scan-frame">
           <video id="scan-video" playsinline muted></video>
+          <div class="scan-placeholder" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8a2 2 0 0 1 2-2h1.5l1-1.5A1 1 0 0 1 7.3 4h9.4a1 1 0 0 1 .8.4l1 1.6H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="4"/><path d="m3 3 18 18"/></svg>
+            <span>Camera is off</span>
+          </div>
           <div class="scan-reticle" aria-hidden="true">
             <span class="corner tl"></span><span class="corner tr"></span>
             <span class="corner bl"></span><span class="corner br"></span>
@@ -79,14 +95,23 @@
           <span id="last-updated">Syncing…</span>
         </div>
       </div>
-      <button id="logout-btn" class="icon-btn" type="button" aria-label="Log out">
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>
-      </button>
+      <div class="topbar-actions">
+        <button id="theme-toggle" class="icon-btn" type="button" aria-label="Switch to light theme" aria-pressed="false"></button>
+        <button id="logout-btn" class="icon-btn" type="button" aria-label="Log out">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>
+        </button>
+      </div>
     </header>
 
     <nav class="tabbar" role="tablist">
-      <button id="tab-dashboard" class="tab active" type="button" role="tab" aria-selected="true">Dashboard</button>
-      <button id="tab-products" class="tab" type="button" role="tab" aria-selected="false">Products</button>
+      <button id="tab-dashboard" class="tab active" type="button" role="tab" aria-selected="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15v3"/><path d="M12 10v8"/><path d="M17 6v12"/></svg>
+        Dashboard
+      </button>
+      <button id="tab-products" class="tab" type="button" role="tab" aria-selected="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="M3.3 7 12 12l8.7-5"/><path d="M12 22V12"/></svg>
+        Products
+      </button>
     </nav>
 
     <!-- ---------- DASHBOARD ---------- -->

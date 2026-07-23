@@ -4,8 +4,8 @@
   "description": "Real-time sales and inventory dashboard for POS system",
   "start_url": ".",
   "display": "standalone",
-  "background_color": "#1B1815",
-  "theme_color": "#1B1815",
+  "background_color": "#020617",
+  "theme_color": "#020617",
   "icons": [
     {
       "src": "icon-192.png",

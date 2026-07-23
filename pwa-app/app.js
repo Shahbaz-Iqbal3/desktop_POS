@@ -83,16 +83,54 @@ const offlineIndicator = el('offline-indicator');
 const toastEl = el('toast');
 
 const scanVideo = el('scan-video');
+const scanFrame = el('scan-frame');
 const scanStatus = el('scan-status');
 const startScanBtn = el('start-scan-btn');
 const manualPairForm = el('manual-pair-form');
 const pairCodeInput = el('pair-code');
 const pairError = el('pair-error');
 
+const themeToggleBtns = [el('theme-toggle'), el('theme-toggle-login')].filter(Boolean);
+
 const shopNameEl = el('shop-name');
 const shopCurrencyEl = el('shop-currency');
 const lastUpdatedEl = el('last-updated');
 const logoutBtn = el('logout-btn');
+
+// ============================================================
+// Theme (dark default, optional light) — persisted in localStorage
+// ============================================================
+const SUN_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>';
+const MOON_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>';
+
+function getTheme() {
+  return document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+}
+
+function applyTheme(theme) {
+  if (theme === 'light') {
+    document.documentElement.setAttribute('data-theme', 'light');
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+  }
+  const metaTheme = el('theme-color-meta');
+  if (metaTheme) metaTheme.setAttribute('content', theme === 'light' ? '#f8fafc' : '#020617');
+  themeToggleBtns.forEach((btn) => {
+    // icon shows what tapping it will switch *to*
+    btn.innerHTML = theme === 'light' ? MOON_ICON : SUN_ICON;
+    btn.setAttribute('aria-pressed', String(theme === 'light'));
+    btn.setAttribute('aria-label', theme === 'light' ? 'Switch to dark theme' : 'Switch to light theme');
+  });
+}
+
+function toggleTheme() {
+  const next = getTheme() === 'light' ? 'dark' : 'light';
+  try { localStorage.setItem('pos-theme', next); } catch {}
+  applyTheme(next);
+}
+
+applyTheme(getTheme());
+themeToggleBtns.forEach((btn) => btn.addEventListener('click', toggleTheme));
 
 // ============================================================
 // Init
@@ -183,6 +221,7 @@ async function startScanning() {
     scanStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
     scanVideo.srcObject = scanStream;
     await scanVideo.play();
+    scanFrame.classList.add('active');
     startScanBtn.textContent = 'Stop camera';
     scanStatus.textContent = 'Scanning…';
     scanFrameLoop();
@@ -201,6 +240,7 @@ function stopScanning() {
     scanStream = null;
   }
   scanVideo.srcObject = null;
+  scanFrame.classList.remove('active');
   startScanBtn.textContent = 'Turn on camera';
   scanStatus.textContent = 'Point the camera at the QR code shown in the desktop app.';
 }
