@@ -18,143 +18,120 @@ tailwind.config = {
         gold: { 400:'#C5A55A', 500:'#B08D3A' },
         charcoal: { 700:'#2D2D2D', 800:'#1A1A1A', 900:'#0D0D0D', 950:'#060606' }
       },
-      fontFamily: {
-        manrope: ['Manrope', 'sans-serif'],
-        inter: ['Inter', 'sans-serif']
-      }
+      fontFamily: { manrope:['Manrope','sans-serif'], inter:['Inter','sans-serif'] }
     }
   }
 }
 </script>
 <style>
-  * { margin:0; padding:0; box-sizing:border-box; }
-  html { scroll-behavior: smooth; }
-  body { font-family:'Inter',sans-serif; background:#0D0D0D; color:#E0E0E0; overflow-x:hidden; }
-  ::selection { background: rgba(139,92,246,0.35); color:#fff; }
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',sans-serif;background:#0D0D0D;color:#E0E0E0;overflow-x:hidden}
+::selection{background:rgba(139,92,246,0.35);color:#fff}
 
-  .fabric-texture {
-    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23818CF8' stroke-width='0.15' opacity='0.4'%3E%3Cpath d='M0 0h60v60H0z'/%3E%3Cpath d='M0 30h60M30 0v60'/%3E%3Cpath d='M0 15h60M15 0v60M0 45h60M45 0v60'/%3E%3C/g%3E%3C/svg%3E");
-    background-size: 60px 60px;
-    position: absolute; inset:0; pointer-events:none; z-index:0;
-  }
+.fabric-texture{background-image:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23818CF8' stroke-width='0.15' opacity='0.4'%3E%3Cpath d='M0 0h60v60H0z'/%3E%3Cpath d='M0 30h60M30 0v60'/%3E%3Cpath d='M0 15h60M15 0v60M0 45h60M45 0v60'/%3E%3C/g%3E%3C/svg%3E");background-size:60px 60px;position:absolute;inset:0;pointer-events:none;z-index:0}
+.gradient-accent{background:linear-gradient(135deg,#7C3AED 0%,#4F46E5 100%)}
+.gradient-accent-soft{background:linear-gradient(135deg,#8B5CF6 0%,#6366F1 100%)}
+.gradient-hero{background:linear-gradient(160deg,#0D0D0D 0%,#1E1B4B 30%,rgba(124,58,237,0.08) 60%,#0D0D0D 100%)}
 
-  .gradient-accent { background: linear-gradient(135deg, #7C3AED 0%, #4F46E5 100%); }
-  .gradient-accent-soft { background: linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%); }
-  .gradient-hero { background: linear-gradient(160deg, #0D0D0D 0%, #1E1B4B 30%, rgba(124,58,237,0.08) 60%, #0D0D0D 100%); }
+.reveal{opacity:0;transform:translateY(30px);transition:all 0.8s cubic-bezier(0.16,1,0.3,1)}
+.reveal.active{opacity:1;transform:translateY(0)}
+.reveal-delay-1{transition-delay:.1s}.reveal-delay-2{transition-delay:.2s}.reveal-delay-3{transition-delay:.3s}.reveal-delay-4{transition-delay:.4s}.reveal-delay-5{transition-delay:.5s}
 
-  .reveal { opacity:0; transform:translateY(30px); transition: all 0.8s cubic-bezier(0.16,1,0.3,1); }
-  .reveal.active { opacity:1; transform:translateY(0); }
-  .reveal-delay-1 { transition-delay:0.1s; }
-  .reveal-delay-2 { transition-delay:0.2s; }
-  .reveal-delay-3 { transition-delay:0.3s; }
-  .reveal-delay-4 { transition-delay:0.4s; }
-  .reveal-delay-5 { transition-delay:0.5s; }
+@keyframes pulse-glow{0%,100%{opacity:.3;transform:scale(1)}50%{opacity:.6;transform:scale(1.05)}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes float-d{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+@keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@keyframes scan-line{0%{top:0;opacity:.8}50%{top:85%;opacity:.3}100%{top:0;opacity:.8}}
+@keyframes receipt-feed{0%{transform:translateY(0)}100%{transform:translateY(-8px)}}
+.animate-pulse-glow{animation:pulse-glow 4s ease-in-out infinite}
+.animate-float{animation:float 5s ease-in-out infinite}
+.animate-float-d{animation:float-d 4s ease-in-out infinite;animation-delay:.8s}
+.animate-marquee{animation:marquee 25s linear infinite}
+.animate-scan{animation:scan-line 2.5s ease-in-out infinite}
+.animate-receipt{animation:receipt-feed 1.5s ease-in-out infinite alternate}
 
-  @keyframes pulse-glow { 0%,100%{opacity:0.3;transform:scale(1)} 50%{opacity:0.6;transform:scale(1.05)} }
-  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
-  @keyframes float-delayed { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-4px)} }
-  @keyframes marquee { from{transform:translateX(0)} to{transform:translateX(-50%)} }
-  @keyframes scan-line { 0%{top:0;opacity:0.8} 50%{top:85%;opacity:0.3} 100%{top:0;opacity:0.8} }
-  @keyframes receipt-feed { 0%{transform:translateY(0)} 100%{transform:translateY(-8px)} }
-  .animate-pulse-glow { animation: pulse-glow 4s ease-in-out infinite; }
-  .animate-float { animation: float 5s ease-in-out infinite; }
-  .animate-float-delayed { animation: float-delayed 4s ease-in-out infinite; animation-delay:0.8s; }
-  .animate-marquee { animation: marquee 25s linear infinite; }
-  .animate-scan-line { animation: scan-line 2.5s ease-in-out infinite; }
-  .animate-receipt { animation: receipt-feed 1.5s ease-in-out infinite alternate; }
+.btn-accent{background:linear-gradient(135deg,#7C3AED,#8B5CF6);color:#fff;border:none;position:relative;overflow:hidden;transition:all .3s ease}
+.btn-accent:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(124,58,237,.35)}
+.btn-accent::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.12),transparent);opacity:0;transition:opacity .3s}
+.btn-accent:hover::before{opacity:1}
 
-  .btn-accent {
-    background: linear-gradient(135deg, #7C3AED, #8B5CF6);
-    color:#fff; border:none; position:relative; overflow:hidden;
-    transition: all 0.3s ease;
-  }
-  .btn-accent:hover { transform:translateY(-2px); box-shadow:0 8px 25px rgba(124,58,237,0.35); }
-  .btn-accent::before { content:''; position:absolute; inset:0; background: linear-gradient(135deg, rgba(255,255,255,0.12), transparent); opacity:0; transition:opacity 0.3s; }
-  .btn-accent:hover::before { opacity:1; }
+.card-dark{background:rgba(26,26,26,.85);border:1px solid rgba(124,58,237,.12);backdrop-filter:blur(12px);transition:all .4s ease}
+.card-dark:hover{border-color:rgba(124,58,237,.35);box-shadow:0 0 25px rgba(124,58,237,.08)}
+.card-accent-border{background:rgba(26,26,26,.85);border:1px solid rgba(139,92,246,.18);backdrop-filter:blur(12px);transition:all .4s ease}
+.card-accent-border:hover{border-color:rgba(139,92,246,.4);box-shadow:0 0 25px rgba(139,92,246,.12)}
+.nav-blur{background:rgba(13,13,13,.88);backdrop-filter:blur(20px);border-bottom:1px solid rgba(124,58,237,.08)}
+.screenshot-thumb{border:1px solid rgba(124,58,237,.15);border-radius:10px;overflow:hidden;transition:all .3s ease;cursor:pointer;position:relative}
+.screenshot-thumb:hover{border-color:rgba(139,92,246,.5);box-shadow:0 0 20px rgba(139,92,246,.15);transform:translateY(-3px)}
+.screenshot-thumb .overlay{position:absolute;inset:0;background:rgba(13,13,13,.4);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .3s}
+.screenshot-thumb:hover .overlay{opacity:1}
+.stat-number{font-family:'Manrope',sans-serif;font-weight:800;background:linear-gradient(135deg,#A78BFA,#C4B5FD);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.section-divider{height:1px;background:linear-gradient(90deg,transparent,rgba(124,58,237,.2),rgba(139,92,246,.15),transparent)}
 
-  .card-dark { background: rgba(26,26,26,0.85); border: 1px solid rgba(124,58,237,0.12); backdrop-filter: blur(12px); transition: all 0.4s ease; }
-  .card-dark:hover { border-color: rgba(124,58,237,0.35); box-shadow: 0 0 25px rgba(124,58,237,0.08); }
-  .card-accent-border { background: rgba(26,26,26,0.85); border: 1px solid rgba(139,92,246,0.18); backdrop-filter: blur(12px); transition: all 0.4s ease; }
-  .card-accent-border:hover { border-color: rgba(139,92,246,0.4); box-shadow: 0 0 25px rgba(139,92,246,0.12); }
+.lightbox{position:fixed;inset:0;z-index:9999;background:rgba(6,6,6,.92);backdrop-filter:blur(16px);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:all .4s cubic-bezier(.16,1,.3,1);padding:20px}
+.lightbox.open{opacity:1;pointer-events:auto}
+.lightbox img{max-width:90vw;max-height:85vh;border-radius:12px;border:2px solid rgba(124,58,237,.3);box-shadow:0 0 60px rgba(124,58,237,.15);transform:scale(.9);transition:transform .4s cubic-bezier(.16,1,.3,1)}
+.lightbox.open img{transform:scale(1)}
 
-  .nav-blur { background: rgba(13,13,13,0.88); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(124,58,237,0.08); }
+.toast-notification{position:fixed;bottom:24px;right:24px;z-index:9998;background:rgba(26,26,26,.95);border:1px solid rgba(139,92,246,.35);backdrop-filter:blur(12px);border-radius:12px;padding:16px 24px;transform:translateY(100px);opacity:0;transition:all .4s cubic-bezier(.16,1,.3,1);max-width:360px}
+.toast-notification.show{transform:translateY(0);opacity:1}
 
-  .screenshot-thumb { border: 1px solid rgba(124,58,237,0.15); border-radius: 10px; overflow:hidden; transition: all 0.3s ease; cursor:pointer; position:relative; }
-  .screenshot-thumb:hover { border-color: rgba(139,92,246,0.5); box-shadow: 0 0 20px rgba(139,92,246,0.15); transform: translateY(-3px); }
-  .screenshot-thumb .overlay { position:absolute; inset:0; background: rgba(13,13,13,0.4); display:flex; align-items:center; justify-content:center; opacity:0; transition:opacity 0.3s; }
-  .screenshot-thumb:hover .overlay { opacity:1; }
+.review-card{background:rgba(26,26,26,.6);border:1px solid rgba(60,60,60,.4);border-radius:12px;padding:20px;transition:all .3s ease}
+.review-card:hover{border-color:rgba(124,58,237,.25);background:rgba(26,26,26,.8)}
+.reminder-row{background:rgba(26,26,26,.5);border:1px solid rgba(60,60,60,.3);border-radius:8px;padding:12px 16px;transition:all .3s ease}
+.reminder-row:hover{border-color:rgba(124,58,237,.3);background:rgba(26,26,26,.7)}
 
-  .stat-number { font-family:'Manrope',sans-serif; font-weight:800; background: linear-gradient(135deg, #A78BFA, #C4B5FD); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+/* === MOCKUP STYLES === */
+.monitor-body{width:320px;max-width:100%;background:linear-gradient(145deg,#2D2D2D,#1A1A1A);border-radius:10px 10px 0 0;border:2px solid rgba(124,58,237,.15);overflow:hidden;box-shadow:0 -6px 25px rgba(124,58,237,.08)}
+.monitor-body .screen-inner{background:#1A1A1A;margin:5px;border-radius:5px;overflow:hidden}
+.monitor-body .screen-inner img{width:100%;height:auto;display:block}
+.monitor-stand-neck{width:32px;height:22px;background:linear-gradient(180deg,#2D2D2D,#222);margin:0 auto;border-radius:0 0 3px 3px}
+.monitor-stand-base{width:65px;height:6px;background:linear-gradient(180deg,#2D2D2D,#1A1A1A);margin:0 auto;border-radius:3px;box-shadow:0 4px 12px rgba(0,0,0,.5)}
 
-  .section-divider { height:1px; background: linear-gradient(90deg, transparent, rgba(124,58,237,0.2), rgba(139,92,246,0.15), transparent); }
+.phone-mockup-hero{width:150px;height:300px;border-radius:24px;border:2px solid rgba(124,58,237,.25);background:#1A1A1A;position:relative;overflow:hidden;box-shadow:0 0 25px rgba(124,58,237,.1),10px 10px 35px rgba(0,0,0,.4);flex-shrink:0}
+.phone-mockup-hero .notch{position:absolute;top:5px;left:50%;transform:translateX(-50%);width:50px;height:4px;border-radius:2px;background:#2D2D2D;z-index:5}
+.phone-mockup-hero .screen-area{position:absolute;top:12px;left:5px;right:5px;bottom:5px;border-radius:18px;overflow:hidden;background:#1A1A1A}
 
-  .lightbox { position:fixed; inset:0; z-index:9999; background: rgba(6,6,6,0.92); backdrop-filter: blur(16px); display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition: all 0.4s cubic-bezier(0.16,1,0.3,1); padding:20px; }
-  .lightbox.open { opacity:1; pointer-events:auto; }
-  .lightbox img { max-width:90vw; max-height:85vh; border-radius:12px; border:2px solid rgba(124,58,237,0.3); box-shadow: 0 0 60px rgba(124,58,237,0.15); transform: scale(0.9); transition: transform 0.4s cubic-bezier(0.16,1,0.3,1); }
-  .lightbox.open img { transform: scale(1); }
+.pos-printer{width:85px;height:55px;background:linear-gradient(145deg,#3A3A3A,#2D2D2D);border-radius:5px;border:1px solid rgba(100,100,100,.3);position:relative;box-shadow:0 4px 15px rgba(0,0,0,.4);flex-shrink:0}
+.pos-printer .paper-slot{position:absolute;top:5px;left:8px;right:8px;height:2px;background:#4A4A4A;border-radius:1px}
+.pos-printer .receipt-paper{position:absolute;top:-1px;left:12px;width:40px;background:#E8E8E8;border-radius:1px 1px 0 0;height:14px;animation:receipt-feed 1.5s ease-in-out infinite alternate}
+.pos-printer .receipt-paper .receipt-text{font-size:2px;color:#333;padding:1px;line-height:1.2}
+.pos-printer .led-light{position:absolute;bottom:6px;right:8px;width:3px;height:3px;border-radius:50%;background:#22C55E;box-shadow:0 0 5px rgba(34,197,94,.6)}
 
-  .toast-notification { position:fixed; bottom:24px; right:24px; z-index:9998; background: rgba(26,26,26,0.95); border: 1px solid rgba(139,92,246,0.35); backdrop-filter:blur(12px); border-radius:12px; padding:16px 24px; transform:translateY(100px); opacity:0; transition: all 0.4s cubic-bezier(0.16,1,0.3,1); max-width:360px; }
-  .toast-notification.show { transform:translateY(0); opacity:1; }
+.barcode-scanner{position:relative;width:42px;height:68px;flex-shrink:0}
+.scanner-handle{position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:12px;height:34px;background:linear-gradient(180deg,#3A3A3A,#2D2D2D);border-radius:2px 2px 5px 5px}
+.scanner-head{position:absolute;top:0;left:0;right:0;height:36px;background:linear-gradient(145deg,#4A4A4A,#333);border-radius:5px 5px 2px 2px;border:1px solid rgba(100,100,100,.3)}
+.scanner-head .scan-window{position:absolute;bottom:3px;left:5px;right:5px;height:7px;background:rgba(124,58,237,.15);border-radius:1px;border:1px solid rgba(124,58,237,.3)}
+.scanner-head .scan-beam{position:absolute;bottom:6px;left:7px;right:7px;height:1px;background:#8B5CF6;border-radius:1px;animation:scan-line 2.5s ease-in-out infinite;box-shadow:0 0 3px rgba(139,92,246,.8)}
+.scanner-trigger{position:absolute;top:24px;right:-2px;width:7px;height:10px;background:#3A3A3A;border-radius:2px 3px 3px 2px;border:1px solid rgba(100,100,100,.2)}
 
-  .review-card { background: rgba(26,26,26,0.6); border: 1px solid rgba(60,60,60,0.4); border-radius: 12px; padding: 20px; transition: all 0.3s ease; }
-  .review-card:hover { border-color: rgba(124,58,237,0.25); background: rgba(26,26,26,0.8); }
-  .reminder-row { background: rgba(26,26,26,0.5); border: 1px solid rgba(60,60,60,0.3); border-radius: 8px; padding: 12px 16px; transition: all 0.3s ease; }
-  .reminder-row:hover { border-color: rgba(124,58,237,0.3); background: rgba(26,26,26,0.7); }
+.counter-surface{width:100%;height:5px;background:linear-gradient(180deg,#2A2A2A,#1A1A1A);border-radius:2px;box-shadow:0 5px 18px rgba(0,0,0,.5);margin-top:-1px}
 
-  /* === HERO MOCKUP === */
-  .mockup-scene { position:relative; display:flex; align-items:flex-end; justify-content:center; gap:16px; padding:20px 0 0; min-height:420px; }
+/* Phone UI tiny fonts */
+.phone-ui-label{font-family:'Inter',sans-serif;font-size:5px;color:#6B7280;line-height:1.2}
+.phone-ui-value{font-family:'Manrope',sans-serif;font-size:8px;color:#FFFFFF;font-weight:700;line-height:1.1}
+.phone-ui-title{font-family:'Manrope',sans-serif;font-size:7px;color:#FFFFFF;font-weight:800}
+.phone-ui-subtitle{font-family:'Inter',sans-serif;font-size:4.5px;color:#6B7280}
+.phone-ui-green{color:#4ADE80}
+.phone-ui-card{background:#222222;border-radius:3px;padding:3px 4px;border:1px solid rgba(124,58,237,.08)}
 
-  .monitor-body { width:420px; max-width:55vw; background: linear-gradient(145deg, #2D2D2D 0%, #1A1A1A 100%); border-radius: 12px 12px 0 0; border: 2px solid rgba(124,58,237,0.15); position:relative; overflow:hidden; box-shadow: 0 -8px 30px rgba(124,58,237,0.08); }
-  .monitor-body .screen-inner { background:#1A1A1A; margin:6px; border-radius:6px; overflow:hidden; }
-  .monitor-body .screen-inner img { width:100%; height:auto; display:block; }
-  .monitor-stand-neck { width:40px; height:30px; background: linear-gradient(180deg, #2D2D2D, #222); margin:0 auto; border-radius:0 0 4px 4px; }
-  .monitor-stand-base { width:80px; height:8px; background: linear-gradient(180deg, #2D2D2D, #1A1A1A); margin:0 auto; border-radius:4px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
-
-  .phone-mockup-hero { width:180px; height:360px; border-radius:28px; border:2px solid rgba(124,58,237,0.25); background:#1A1A1A; position:relative; overflow:hidden; box-shadow: 0 0 30px rgba(124,58,237,0.1), 12px 12px 40px rgba(0,0,0,0.4); flex-shrink:0; }
-  .phone-mockup-hero .notch { position:absolute; top:6px; left:50%; transform:translateX(-50%); width:60px; height:5px; border-radius:3px; background:#2D2D2D; z-index:5; }
-  .phone-mockup-hero .screen-area { position:absolute; top:14px; left:6px; right:6px; bottom:6px; border-radius:20px; overflow:hidden; background:#1A1A1A; }
-
-  .pos-printer { width:100px; height:65px; background: linear-gradient(145deg, #3A3A3A, #2D2D2D); border-radius:6px; border:1px solid rgba(100,100,100,0.3); position:relative; box-shadow: 0 4px 15px rgba(0,0,0,0.4); flex-shrink:0; }
-  .pos-printer .paper-slot { position:absolute; top:6px; left:10px; right:10px; height:3px; background:#4A4A4A; border-radius:2px; }
-  .pos-printer .receipt-paper { position:absolute; top:-2px; left:15px; width:50px; background:#E8E8E8; border-radius:2px 2px 0 0; height:18px; animation: receipt-feed 1.5s ease-in-out infinite alternate; }
-  .pos-printer .receipt-paper .receipt-text { font-size:2px; color:#333; padding:2px; line-height:1.2; }
-  .pos-printer .led-light { position:absolute; bottom:8px; right:10px; width:4px; height:4px; border-radius:50%; background:#22C55E; box-shadow: 0 0 6px rgba(34,197,94,0.6); }
-
-  .barcode-scanner { position:relative; width:50px; height:80px; flex-shrink:0; }
-  .scanner-handle { position:absolute; bottom:0; left:50%; transform:translateX(-50%); width:14px; height:40px; background: linear-gradient(180deg, #3A3A3A, #2D2D2D); border-radius:3px 3px 6px 6px; }
-  .scanner-head { position:absolute; top:0; left:0; right:0; height:42px; background: linear-gradient(145deg, #4A4A4A, #333); border-radius:6px 6px 2px 2px; border:1px solid rgba(100,100,100,0.3); }
-  .scanner-head .scan-window { position:absolute; bottom:4px; left:6px; right:6px; height:8px; background: rgba(124,58,237,0.15); border-radius:2px; border:1px solid rgba(124,58,237,0.3); }
-  .scanner-head .scan-beam { position:absolute; bottom:8px; left:8px; right:8px; height:1px; background: #8B5CF6; border-radius:1px; animation: scan-line 2.5s ease-in-out infinite; box-shadow: 0 0 4px rgba(139,92,246,0.8); }
-  .scanner-trigger { position:absolute; top:28px; right:-2px; width:8px; height:12px; background:#3A3A3A; border-radius:2px 4px 4px 2px; border:1px solid rgba(100,100,100,0.2); }
-
-  .counter-surface { width:100%; height:6px; background: linear-gradient(180deg, #2A2A2A, #1A1A1A); border-radius:3px; box-shadow: 0 6px 20px rgba(0,0,0,0.5); margin-top:-2px; }
-
-  /* Phone UI styles for hero mockup */
-  .phone-ui-label { font-family:'Inter',sans-serif; font-size:6px; color:#6B7280; line-height:1.2; letter-spacing:0; }
-  .phone-ui-value { font-family:'Manrope',sans-serif; font-size:9px; color:#FFFFFF; font-weight:700; line-height:1.1; }
-  .phone-ui-title { font-family:'Manrope',sans-serif; font-size:8px; color:#FFFFFF; font-weight:800; }
-  .phone-ui-subtitle { font-family:'Inter',sans-serif; font-size:5px; color:#6B7280; }
-  .phone-ui-accent { color:#A78BFA; }
-  .phone-ui-green { color:#4ADE80; }
-  .phone-ui-card { background:#222222; border-radius:4px; padding:4px 5px; border:1px solid rgba(124,58,237,0.08); }
-
-  @media (max-width:768px) {
-    .mockup-scene { flex-wrap:wrap; gap:10px; min-height:240px; padding:10px 0 0; }
-    .monitor-body { width:220px; max-width:65vw; }
-    .phone-mockup-hero { width:110px; height:220px; border-radius:18px; }
-    .phone-mockup-hero .notch { width:35px; height:3px; top:4px; }
-    .phone-mockup-hero .screen-area { top:9px; left:4px; right:4px; bottom:4px; border-radius:14px; }
-    .pos-printer { width:70px; height:45px; }
-    .barcode-scanner { width:35px; height:55px; }
-    .scanner-handle { width:10px; height:25px; }
-    .scanner-head { height:30px; }
-    .scanner-trigger { top:18px; width:6px; height:8px; }
-    .phone-ui-label { font-size:4px; }
-    .phone-ui-value { font-size:6px; }
-    .phone-ui-title { font-size:5px; }
-    .phone-ui-subtitle { font-size:3.5px; }
-    .phone-ui-card { padding:2px 3px; border-radius:3px; }
-  }
+@media(max-width:1024px){
+  .phone-mockup-hero{width:130px;height:260px;border-radius:20px}
+  .phone-mockup-hero .notch{width:40px;height:3px;top:4px}
+  .phone-mockup-hero .screen-area{top:10px;left:4px;right:4px;bottom:4px;border-radius:15px}
+  .monitor-body{width:260px}
+  .pos-printer{width:70px;height:45px}
+  .barcode-scanner{width:35px;height:55px}
+  .scanner-handle{width:10px;height:25px}
+  .scanner-head{height:30px}
+  .scanner-trigger{top:18px;width:5px;height:7px}
+}
+@media(max-width:768px){
+  .phone-mockup-hero{width:120px;height:240px}
+  .monitor-body{width:200px}
+  .pos-printer{width:60px;height:40px}
+  .barcode-scanner{width:30px;height:48px}
+}
 </style>
 </head>
 <body>
@@ -166,464 +143,295 @@ tailwind.config = {
   <button onclick="navigateLightbox(1);event.stopPropagation()" class="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-charcoal-800/80 border border-gray-700 flex items-center justify-center text-gray-300 hover:text-accent-400 transition-all z-10"><span class="iconify text-xl" data-icon="mdi:chevron-right"></span></button>
   <div class="text-center"><img id="lb-img" src="" alt="Screenshot" onclick="event.stopPropagation()"><p id="lb-caption" class="text-sm text-accent-300 font-medium mt-4"></p></div>
 </div>
-
-<!-- Toast -->
 <div id="toast" class="toast-notification"><div class="flex items-center gap-3"><span class="iconify text-accent-400 text-xl" data-icon="mdi:check-circle"></span><p id="toast-msg" class="text-sm text-gray-200"></p></div></div>
 
 <!-- Navigation -->
 <nav class="nav-blur fixed top-0 left-0 right-0 z-50 h-16">
   <div class="fabric-texture"></div>
   <div class="max-w-7xl mx-auto h-full flex items-center justify-between px-4 md:px-6 relative z-10">
-    <a href="#" class="flex items-center gap-2 group">
-      <div class="w-8 h-8 gradient-accent rounded-lg flex items-center justify-center transition-transform duration-500 group-hover:rotate-90"><span class="iconify text-white text-lg" data-icon="mdi:store"></span></div>
-      <div class="flex items-baseline gap-1"><span class="font-manrope text-xl font-bold text-white tracking-tight">Karigar</span><span class="text-xs font-medium text-accent-400 tracking-wider uppercase">POS</span></div>
-    </a>
-    <div class="hidden md:flex items-center gap-6">
-      <a href="#features" class="text-sm font-medium text-gray-400 hover:text-accent-400 transition-colors">Features</a>
-      <a href="#screens" class="text-sm font-medium text-gray-400 hover:text-accent-400 transition-colors">Product</a>
-      <a href="#mobile" class="text-sm font-medium text-gray-400 hover:text-accent-400 transition-colors">Mobile</a>
-      <a href="#reminders" class="text-sm font-medium text-gray-400 hover:text-accent-400 transition-colors">Reminders</a>
-      <a href="#results" class="text-sm font-medium text-gray-400 hover:text-accent-400 transition-colors">Results</a>
-      <a href="#reviews" class="text-sm font-medium text-gray-400 hover:text-accent-400 transition-colors">Reviews</a>
-      <a href="#demo" class="btn-accent text-xs font-semibold uppercase tracking-wider px-5 py-2.5 rounded-lg">Book Demo</a>
-    </div>
+    <a href="#" class="flex items-center gap-2 group"><div class="w-8 h-8 gradient-accent rounded-lg flex items-center justify-center transition-transform duration-500 group-hover:rotate-90"><span class="iconify text-white text-lg" data-icon="mdi:store"></span></div><div class="flex items-baseline gap-1"><span class="font-manrope text-xl font-bold text-white tracking-tight">Karigar</span><span class="text-xs font-medium text-accent-400 tracking-wider uppercase">POS</span></div></a>
+    <div class="hidden md:flex items-center gap-6"><a href="#features" class="text-sm font-medium text-gray-400 hover:text-accent-400 transition-colors">Features</a><a href="#screens" class="text-sm font-medium text-gray-400 hover:text-accent-400 transition-colors">Product</a><a href="#mobile" class="text-sm font-medium text-gray-400 hover:text-accent-400 transition-colors">Mobile</a><a href="#reminders" class="text-sm font-medium text-gray-400 hover:text-accent-400 transition-colors">Reminders</a><a href="#results" class="text-sm font-medium text-gray-400 hover:text-accent-400 transition-colors">Results</a><a href="#reviews" class="text-sm font-medium text-gray-400 hover:text-accent-400 transition-colors">Reviews</a><a href="#demo" class="btn-accent text-xs font-semibold uppercase tracking-wider px-5 py-2.5 rounded-lg">Book Demo</a></div>
     <button id="mob-toggle" class="md:hidden w-10 h-10 flex items-center justify-center rounded-lg border border-gray-700 text-gray-300"><span class="iconify text-xl" data-icon="mdi:menu"></span></button>
   </div>
 </nav>
+<div id="mob-menu" class="fixed inset-0 z-40 bg-charcoal-900/95 backdrop-blur-xl flex flex-col items-center justify-center gap-6 transition-all duration-500 opacity-0 pointer-events-none"><button id="mob-close" class="absolute top-4 right-4 w-10 h-10 flex items-center justify-center rounded-lg border border-gray-700 text-gray-300"><span class="iconify text-xl" data-icon="mdi:close"></span></button><a href="#features" class="mob-link text-lg font-medium text-gray-300 hover:text-accent-400">Features</a><a href="#screens" class="mob-link text-lg font-medium text-gray-300 hover:text-accent-400">Product</a><a href="#mobile" class="mob-link text-lg font-medium text-gray-300 hover:text-accent-400">Mobile</a><a href="#reminders" class="mob-link text-lg font-medium text-gray-300 hover:text-accent-400">Reminders</a><a href="#results" class="mob-link text-lg font-medium text-gray-300 hover:text-accent-400">Results</a><a href="#reviews" class="mob-link text-lg font-medium text-gray-300 hover:text-accent-400">Reviews</a><a href="#demo" class="btn-accent mob-link text-sm font-semibold uppercase tracking-wider px-8 py-3 rounded-lg">Book Demo</a></div>
 
-<!-- Mobile Menu -->
-<div id="mob-menu" class="fixed inset-0 z-40 bg-charcoal-900/95 backdrop-blur-xl flex flex-col items-center justify-center gap-6 transition-all duration-500 opacity-0 pointer-events-none">
-  <button id="mob-close" class="absolute top-4 right-4 w-10 h-10 flex items-center justify-center rounded-lg border border-gray-700 text-gray-300"><span class="iconify text-xl" data-icon="mdi:close"></span></button>
-  <a href="#features" class="mob-link text-lg font-medium text-gray-300 hover:text-accent-400">Features</a>
-  <a href="#screens" class="mob-link text-lg font-medium text-gray-300 hover:text-accent-400">Product</a>
-  <a href="#mobile" class="mob-link text-lg font-medium text-gray-300 hover:text-accent-400">Mobile</a>
-  <a href="#reminders" class="mob-link text-lg font-medium text-gray-300 hover:text-accent-400">Reminders</a>
-  <a href="#results" class="mob-link text-lg font-medium text-gray-300 hover:text-accent-400">Results</a>
-  <a href="#reviews" class="mob-link text-lg font-medium text-gray-300 hover:text-accent-400">Reviews</a>
-  <a href="#demo" class="btn-accent mob-link text-sm font-semibold uppercase tracking-wider px-8 py-3 rounded-lg">Book Demo</a>
-</div>
-
-<!-- ═══════ HERO ═══════ -->
-<section class="relative min-h-screen gradient-hero overflow-hidden">
+<!-- ════════════════════ HERO — SIDE BY SIDE ════════════════════ -->
+<section class="relative gradient-hero overflow-hidden">
   <div class="fabric-texture"></div>
-  <div class="absolute top-20 right-10 w-72 h-72 rounded-full bg-accent-500/5 blur-3xl animate-pulse-glow"></div>
-  <div class="absolute bottom-32 left-10 w-96 h-96 rounded-full bg-indigo-500/3 blur-3xl animate-pulse-glow" style="animation-delay:1.5s"></div>
+  <div class="absolute top-10 right-10 w-60 h-60 rounded-full bg-accent-500/5 blur-3xl animate-pulse-glow"></div>
+  <div class="absolute bottom-10 left-10 w-80 h-80 rounded-full bg-indigo-500/3 blur-3xl animate-pulse-glow" style="animation-delay:1.5s"></div>
 
-  <div class="relative z-10 max-w-7xl mx-auto px-4 md:px-6 pt-24 md:pt-32 pb-8 md:pb-12">
+  <div class="relative z-10 max-w-7xl mx-auto px-4 md:px-6 py-24 md:py-28 lg:py-32">
+    <div class="flex flex-col lg:flex-row items-center gap-8 lg:gap-14">
 
-    <div class="reveal flex items-center gap-2 mb-6">
-      <div class="w-2 h-2 rounded-full bg-accent-400 animate-pulse"></div>
-      <span class="text-xs font-semibold uppercase tracking-widest text-accent-400">Built for Pakistani Fabric Retail</span>
-    </div>
+      <!-- ══ LEFT COLUMN: TEXT + STATS ══ -->
+      <div class="lg:w-[52%] flex flex-col">
 
-    <h1 class="reveal reveal-delay-1 font-manrope text-4xl md:text-6xl lg:text-7xl font-bold text-white leading-none tracking-tighter mb-4">
-      The POS That<br>
-      <span class="text-transparent bg-clip-text bg-gradient-to-r from-accent-400 via-indigo-400 to-accent-400">Understands</span><br>
-      Your Thaan.
-    </h1>
-
-    <div class="reveal reveal-delay-2 flex items-center gap-4 mb-6 select-none">
-      <div class="h-px w-12 md:w-20 bg-gradient-to-r from-transparent to-accent-500/40"></div>
-      <span class="inline-flex items-center gap-3 px-5 py-2 rounded-full border border-accent-400/15 bg-accent-400/5 backdrop-blur-sm">
-        <span class="w-1.5 h-1.5 rounded-full bg-accent-500 animate-pulse"></span>
-        <span class="text-lg md:text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-accent-400 to-indigo-400" style="letter-spacing:0.04em;">آپ کی دکان، آپ کا نظام</span>
-        <span class="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse" style="animation-delay:0.5s;"></span>
-      </span>
-      <div class="h-px w-12 md:w-20 bg-gradient-to-l from-transparent to-indigo-400/40"></div>
-    </div>
-
-    <p class="reveal reveal-delay-2 text-sm md:text-base text-gray-400 max-w-xl leading-relaxed mb-8">
-      Cross device inventory sync. Wholesale + retail billing on one screen. Seasonal collection tracking from Eid lawn to wedding chiffon. Supplier ledger that matches your bazaar accounts. Purchase reminders so you never miss a reorder. Mobile access to live sales from anywhere.
-    </p>
-
-    <div class="reveal reveal-delay-3 flex flex-wrap items-center gap-4 mb-10">
-      <a href="#demo" class="btn-accent text-sm font-semibold uppercase tracking-wider px-8 py-3 rounded-lg inline-flex items-center gap-2">
-        <span class="iconify" data-icon="mdi:calendar-clock"></span>Book a Demo
-      </a>
-      <a href="#screens" class="text-sm font-semibold uppercase tracking-wider px-8 py-3 rounded-lg border border-accent-500/30 text-gray-300 hover:border-accent-400/50 hover:text-accent-400 transition-all duration-300 inline-flex items-center gap-2">
-        <span class="iconify" data-icon="mdi:play-circle-outline"></span>See Product
-      </a>
-      <a href="https://wa.me/923234548826" target="_blank" class="text-sm font-medium text-green-400 hover:text-green-300 transition-colors inline-flex items-center gap-2 ml-2">
-        <span class="iconify text-lg" data-icon="mdi:whatsapp"></span>WhatsApp Us
-      </a>
-    </div>
-
-    <!-- ═══════ HERO MOCKUP ═══════ -->
-    <div class="reveal reveal-delay-4 mockup-scene">
-
-      <!-- Barcode Scanner -->
-      <div class="barcode-scanner animate-float-delayed" style="animation-delay:1.2s;">
-        <div class="scanner-head">
-          <div class="scan-window"></div>
-          <div class="scan-beam"></div>
+        <div class="reveal flex items-center gap-2 mb-5">
+          <div class="w-2 h-2 rounded-full bg-accent-400 animate-pulse"></div>
+          <span class="text-xs font-semibold uppercase tracking-widest text-accent-400">Built for Pakistani Fabric Retail</span>
         </div>
-        <div class="scanner-trigger"></div>
-        <div class="scanner-handle"></div>
+
+        <h1 class="reveal reveal-delay-1 font-manrope text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-white leading-none tracking-tighter mb-4">
+          The POS That<br>
+          <span class="text-transparent bg-clip-text bg-gradient-to-r from-accent-400 via-indigo-400 to-accent-400">Understands</span><br>
+          Your Thaan.
+        </h1>
+
+        <div class="reveal reveal-delay-2 flex items-center gap-4 mb-5 select-none">
+          <div class="h-px w-10 md:w-16 bg-gradient-to-r from-transparent to-accent-500/40"></div>
+          <span class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-accent-400/15 bg-accent-400/5 backdrop-blur-sm">
+            <span class="w-1.5 h-1.5 rounded-full bg-accent-500 animate-pulse"></span>
+            <span class="text-base md:text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-accent-400 to-indigo-400" style="letter-spacing:0.04em;">آپ کی دکان، آپ کا نظام</span>
+            <span class="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse" style="animation-delay:.5s;"></span>
+          </span>
+          <div class="h-px w-10 md:w-16 bg-gradient-to-l from-transparent to-indigo-400/40"></div>
+        </div>
+
+        <p class="reveal reveal-delay-2 text-sm md:text-base text-gray-400 max-w-lg leading-relaxed mb-7">
+          Cross devices inventory sync. Wholesale + retail billing on one screen. Seasonal collection tracking from Eid lawn to wedding chiffon. Supplier ledger that matches your bazaar accounts. Purchase reminders so you never miss a reorder. Mobile access to live sales from anywhere.
+        </p>
+
+        <div class="reveal reveal-delay-3 flex flex-wrap items-center gap-4 mb-8">
+          <a href="#demo" class="btn-accent text-sm font-semibold uppercase tracking-wider px-7 py-3 rounded-lg inline-flex items-center gap-2"><span class="iconify" data-icon="mdi:calendar-clock"></span>Book a Demo</a>
+          <a href="#screens" class="text-sm font-semibold uppercase tracking-wider px-7 py-3 rounded-lg border border-accent-500/30 text-gray-300 hover:border-accent-400/50 hover:text-accent-400 transition-all duration-300 inline-flex items-center gap-2"><span class="iconify" data-icon="mdi:play-circle-outline"></span>See Product</a>
+          <a href="https://wa.me/923234548826" target="_blank" class="text-sm font-medium text-green-400 hover:text-green-300 transition-colors inline-flex items-center gap-2"><span class="iconify text-lg" data-icon="mdi:whatsapp"></span>WhatsApp Us</a>
+        </div>
+
+        <!-- ══ STATS AT BOTTOM ══ -->
+        <div class="reveal reveal-delay-5 flex flex-wrap gap-5 md:gap-8">
+          <div class="flex items-baseline gap-2"><span class="stat-number text-2xl md:text-3xl">350+</span><span class="text-xs text-gray-500 uppercase tracking-wider">Fabric Stores</span></div>
+          <div class="flex items-baseline gap-2"><span class="stat-number text-2xl md:text-3xl">12</span><span class="text-xs text-gray-500 uppercase tracking-wider">Cities</span></div>
+          <div class="flex items-baseline gap-2"><span class="stat-number text-2xl md:text-3xl">3x</span><span class="text-xs text-gray-500 uppercase tracking-wider">Faster Billing</span></div>
+          <div class="flex items-baseline gap-2"><span class="stat-number text-2xl md:text-3xl">99%</span><span class="text-xs text-gray-500 uppercase tracking-wider">Stock Accuracy</span></div>
+        </div>
       </div>
 
-      <!-- ═══════ Desktop Monitor — BILLING SCREEN ═══════ -->
-      <div class="animate-float" style="animation-delay:0s;">
-        <div class="monitor-body">
-          <div class="screen-inner">
-            <img src="https://z-cdn-media.chatglm.cn/files/5972a61d-a252-4eed-8adb-2077536969d7.png?auth_key=1884806340-2a5e4828749f4f5598bc7328c25d1a05-0-fc85484dc5020b4c828565d5da88677b" alt="Karigar POS Billing Screen">
+      <!-- ══ RIGHT COLUMN: MOCKUP ══ -->
+      <div class="lg:w-[48%] reveal reveal-delay-4 flex flex-col items-center">
+        <div class="flex items-end justify-center gap-3 md:gap-4">
+
+          <!-- Barcode Scanner -->
+          <div class="barcode-scanner animate-float-d" style="animation-delay:1.2s;">
+            <div class="scanner-head"><div class="scan-window"></div><div class="scan-beam"></div></div>
+            <div class="scanner-trigger"></div>
+            <div class="scanner-handle"></div>
           </div>
-        </div>
-        <div class="monitor-stand-neck"></div>
-        <div class="monitor-stand-base"></div>
-      </div>
 
-      <!-- POS Printer -->
-      <div class="pos-printer animate-float-delayed" style="animation-delay:0.5s;">
-        <div class="receipt-paper">
-          <div class="receipt-text">My Shop<br>Rs 1250.00<br>#73BF3F01<br>Cash ✓</div>
-        </div>
-        <div class="paper-slot"></div>
-        <div class="led-light"></div>
-      </div>
-
-      <!-- ═══════ Mobile Phone — DASHBOARD UI ═══════ -->
-      <div class="phone-mockup-hero animate-float-delayed" style="animation-delay:0.3s;">
-        <div class="notch"></div>
-        <div class="screen-area">
-          <!-- Simulated Dashboard UI -->
-          <div style="padding:5px 6px; height:100%; display:flex; flex-direction:column; overflow:hidden;">
-
-            <!-- Header -->
-            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px; margin-top:2px;">
-              <div>
-                <div class="phone-ui-subtitle" style="opacity:0.6;">Dashboard</div>
-                <div class="phone-ui-title">My Shop</div>
-              </div>
-              <div style="width:14px; height:14px; border-radius:50%; background:rgba(124,58,237,0.2); display:flex; align-items:center; justify-content:center;">
-                <span class="iconify" data-icon="mdi:bell" style="font-size:7px; color:#A78BFA;"></span>
+          <!-- Desktop Monitor — BILLING SCREEN -->
+          <div class="animate-float" style="animation-delay:0s;">
+            <div class="monitor-body">
+              <div class="screen-inner">
+                <img src="https://z-cdn-media.chatglm.cn/files/5972a61d-a252-4eed-8adb-2077536969d7.png?auth_key=1884806340-2a5e4828749f4f5598bc7328c25d1a05-0-fc85484dc5020b4c828565d5da88677b" alt="Karigar POS Billing Screen">
               </div>
             </div>
-
-            <!-- Today's Sales Card -->
-            <div class="phone-ui-card" style="margin-bottom:3px; border-color:rgba(124,58,237,0.12);">
-              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1px;">
-                <span class="phone-ui-label">Today's Sales</span>
-                <span style="width:4px; height:4px; border-radius:50%; background:#4ADE80; animation:pulse-glow 2s infinite;" class="animate-pulse-glow"></span>
-              </div>
-              <div class="phone-ui-value" style="font-size:11px; margin-bottom:1px;">Rs 68,070</div>
-              <div style="display:flex; align-items:center; gap:2px;">
-                <span class="iconify" data-icon="mdi:arrow-up" style="font-size:5px; color:#4ADE80;"></span>
-                <span class="phone-ui-green" style="font-size:5px; font-weight:600;">+12% vs yesterday</span>
-              </div>
-            </div>
-
-            <!-- Branch Status Card -->
-            <div class="phone-ui-card" style="margin-bottom:3px; border-color:rgba(99,102,241,0.1);">
-              <div class="phone-ui-label" style="margin-bottom:2px;">Branch Status</div>
-              <div style="display:flex; justify-content:space-between; margin-bottom:1px;">
-                <span class="phone-ui-label" style="color:#D1D5DB;">Liberty Branch</span>
-                <span class="phone-ui-green" style="font-size:5px; font-weight:700;">Rs 42,300</span>
-              </div>
-              <div style="display:flex; justify-content:space-between;">
-                <span class="phone-ui-label" style="color:#D1D5DB;">Tariq Road</span>
-                <span class="phone-ui-green" style="font-size:5px; font-weight:700;">Rs 25,770</span>
-              </div>
-            </div>
-
-            <!-- Quick Stats -->
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:3px; margin-bottom:3px;">
-              <div class="phone-ui-card" style="border-color:rgba(55,65,81,0.3);">
-                <div class="phone-ui-label">Bills</div>
-                <div class="phone-ui-value">47</div>
-              </div>
-              <div class="phone-ui-card" style="border-color:rgba(55,65,81,0.3);">
-                <div class="phone-ui-label">Items Sold</div>
-                <div class="phone-ui-value">132</div>
-              </div>
-            </div>
-
-            <!-- Hourly Trend Mini Chart -->
-            <div class="phone-ui-card" style="flex:1; display:flex; flex-direction:column; border-color:rgba(124,58,237,0.08);">
-              <div class="phone-ui-label" style="margin-bottom:1px;">Hourly Trend</div>
-              <svg viewBox="0 0 200 60" style="width:100%; flex:1;">
-                <polyline fill="none" stroke="#8B5CF6" stroke-width="1.5" stroke-linecap="round" points="10,45 30,38 50,30 70,25 90,20 110,28 130,15 150,18 170,12 190,10"/>
-                <polyline fill="rgba(139,92,246,0.08)" stroke="none" points="10,45 30,38 50,30 70,25 90,20 110,28 130,15 150,18 170,12 190,10 190,60 10,60"/>
-              </svg>
-            </div>
-
-            <!-- Bottom Nav -->
-            <div style="display:flex; align-items:center; justify-content:space-around; padding-top:3px; border-top:1px solid rgba(55,65,81,0.3); margin-top:2px;">
-              <div style="display:flex; flex-direction:column; align-items:center; gap:0;">
-                <span class="iconify" data-icon="mdi:view-dashboard" style="font-size:8px; color:#A78BFA;"></span>
-                <span style="font-size:4px; color:#A78BFA; font-weight:600; font-family:'Inter',sans-serif;">Dashboard</span>
-              </div>
-              <div style="display:flex; flex-direction:column; align-items:center; gap:0;">
-                <span class="iconify" data-icon="mdi:cart" style="font-size:8px; color:#6B7280;"></span>
-                <span style="font-size:4px; color:#6B7280; font-family:'Inter',sans-serif;">Billing</span>
-              </div>
-              <div style="display:flex; flex-direction:column; align-items:center; gap:0;">
-                <span class="iconify" data-icon="mdi:package-variant" style="font-size:8px; color:#6B7280;"></span>
-                <span style="font-size:4px; color:#6B7280; font-family:'Inter',sans-serif;">Inventory</span>
-              </div>
-              <div style="display:flex; flex-direction:column; align-items:center; gap:0;">
-                <span class="iconify" data-icon="mdi:bell-outline" style="font-size:8px; color:#6B7280;"></span>
-                <span style="font-size:4px; color:#6B7280; font-family:'Inter',sans-serif;">Reminder</span>
-              </div>
-            </div>
-
+            <div class="monitor-stand-neck"></div>
+            <div class="monitor-stand-base"></div>
           </div>
+
+          <!-- POS Printer -->
+          <div class="pos-printer animate-float-d" style="animation-delay:.5s;">
+            <div class="receipt-paper"><div class="receipt-text">My Shop<br>Rs 1250.00<br>#73BF3F01<br>Cash ✓</div></div>
+            <div class="paper-slot"></div>
+            <div class="led-light"></div>
+          </div>
+
+          <!-- Mobile Phone — DASHBOARD UI -->
+          <div class="phone-mockup-hero animate-float-d" style="animation-delay:.3s;">
+            <div class="notch"></div>
+            <div class="screen-area">
+              <div style="padding:4px 5px;height:100%;display:flex;flex-direction:column;overflow:hidden;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;margin-top:2px;">
+                  <div><div class="phone-ui-subtitle" style="opacity:.6;">Dashboard</div><div class="phone-ui-title">My Shop</div></div>
+                  <div style="width:12px;height:12px;border-radius:50%;background:rgba(124,58,237,.2);display:flex;align-items:center;justify-content:center;"><span class="iconify" data-icon="mdi:bell" style="font-size:6px;color:#A78BFA;"></span></div>
+                </div>
+                <div class="phone-ui-card" style="margin-bottom:2px;border-color:rgba(124,58,237,.12);">
+                  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1px;"><span class="phone-ui-label">Today's Sales</span><span style="width:3px;height:3px;border-radius:50%;background:#4ADE80;" class="animate-pulse"></span></div>
+                  <div class="phone-ui-value" style="font-size:10px;margin-bottom:1px;">Rs 68,070</div>
+                  <div style="display:flex;align-items:center;gap:1px;"><span class="iconify" data-icon="mdi:arrow-up" style="font-size:4px;color:#4ADE80;"></span><span class="phone-ui-green" style="font-size:4px;font-weight:600;">+12% vs yesterday</span></div>
+                </div>
+                <div class="phone-ui-card" style="margin-bottom:2px;border-color:rgba(99,102,241,.1);">
+                  <div class="phone-ui-label" style="margin-bottom:1px;">Branch Status</div>
+                  <div style="display:flex;justify-content:space-between;margin-bottom:1px;"><span class="phone-ui-label" style="color:#D1D5DB;">Liberty Branch</span><span class="phone-ui-green" style="font-size:4px;font-weight:700;">Rs 42,300</span></div>
+                  <div style="display:flex;justify-content:space-between;"><span class="phone-ui-label" style="color:#D1D5DB;">Tariq Road</span><span class="phone-ui-green" style="font-size:4px;font-weight:700;">Rs 25,770</span></div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px;margin-bottom:2px;">
+                  <div class="phone-ui-card" style="border-color:rgba(55,65,81,.3);"><div class="phone-ui-label">Bills</div><div class="phone-ui-value">47</div></div>
+                  <div class="phone-ui-card" style="border-color:rgba(55,65,81,.3);"><div class="phone-ui-label">Items Sold</div><div class="phone-ui-value">132</div></div>
+                </div>
+                <div class="phone-ui-card" style="flex:1;display:flex;flex-direction:column;border-color:rgba(124,58,237,.08);">
+                  <div class="phone-ui-label" style="margin-bottom:1px;">Hourly Trend</div>
+                  <svg viewBox="0 0 200 60" style="width:100%;flex:1;"><polyline fill="none" stroke="#8B5CF6" stroke-width="1.5" stroke-linecap="round" points="10,45 30,38 50,30 70,25 90,20 110,28 130,15 150,18 170,12 190,10"/><polyline fill="rgba(139,92,246,.08)" stroke="none" points="10,45 30,38 50,30 70,25 90,20 110,28 130,15 150,18 170,12 190,10 190,60 10,60"/></svg>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-around;padding-top:2px;border-top:1px solid rgba(55,65,81,.3);margin-top:1px;">
+                  <div style="display:flex;flex-direction:column;align-items:center;gap:0;"><span class="iconify" data-icon="mdi:view-dashboard" style="font-size:7px;color:#A78BFA;"></span><span style="font-size:3.5px;color:#A78BFA;font-weight:600;font-family:'Inter',sans-serif;">Dashboard</span></div>
+                  <div style="display:flex;flex-direction:column;align-items:center;gap:0;"><span class="iconify" data-icon="mdi:cart" style="font-size:7px;color:#6B7280;"></span><span style="font-size:3.5px;color:#6B7280;font-family:'Inter',sans-serif;">Billing</span></div>
+                  <div style="display:flex;flex-direction:column;align-items:center;gap:0;"><span class="iconify" data-icon="mdi:package-variant" style="font-size:7px;color:#6B7280;"></span><span style="font-size:3.5px;color:#6B7280;font-family:'Inter',sans-serif;">Inventory</span></div>
+                  <div style="display:flex;flex-direction:column;align-items:center;gap:0;"><span class="iconify" data-icon="mdi:bell-outline" style="font-size:7px;color:#6B7280;"></span><span style="font-size:3.5px;color:#6B7280;font-family:'Inter',sans-serif;">Reminder</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
         </div>
+        <!-- Counter Surface -->
+        <div class="counter-surface max-w-md mx-auto mt-0 w-full"></div>
       </div>
 
     </div>
-
-    <!-- Counter Surface -->
-    <div class="reveal reveal-delay-4 counter-surface max-w-2xl mx-auto mt-0"></div>
-
-    <!-- Stats -->
-    <div class="reveal reveal-delay-5 flex flex-wrap gap-6 md:gap-10 mt-8 md:mt-10">
-      <div class="flex items-baseline gap-2"><span class="stat-number text-3xl md:text-4xl">350+</span><span class="text-xs text-gray-500 uppercase tracking-wider">Fabric Stores</span></div>
-      <div class="flex items-baseline gap-2"><span class="stat-number text-3xl md:text-4xl">12</span><span class="text-xs text-gray-500 uppercase tracking-wider">Cities</span></div>
-      <div class="flex items-baseline gap-2"><span class="stat-number text-3xl md:text-4xl">3x</span><span class="text-xs text-gray-500 uppercase tracking-wider">Faster Billing</span></div>
-      <div class="flex items-baseline gap-2"><span class="stat-number text-3xl md:text-4xl">99%</span><span class="text-xs text-gray-500 uppercase tracking-wider">Stock Accuracy</span></div>
-    </div>
-
   </div>
 </section>
 
 <div class="section-divider mx-6"></div>
 
 <!-- FEATURES -->
-<section id="features" class="relative py-16 md:py-24 bg-charcoal-900 overflow-hidden">
-  <div class="fabric-texture"></div>
-  <div class="max-w-7xl mx-auto px-4 md:px-6 relative z-10">
-    <div class="reveal flex items-center gap-3 mb-3"><div class="w-8 h-1 gradient-accent rounded-full"></div><span class="text-xs font-semibold uppercase tracking-widest text-accent-400">Core Features</span></div>
-    <h2 class="reveal reveal-delay-1 font-manrope text-2xl md:text-4xl font-bold text-white tracking-tight mb-3">Built Around How<br>Fabric Stores Actually Work</h2>
-    <p class="reveal reveal-delay-2 text-sm text-gray-500 max-w-lg mb-12">Not a generic POS re-skinned. Every feature reflects how unstitched suit sellers, thaan merchants, and wholesale-retail hybrid operators run their daily business.</p>
-
-    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
-      <div class="reveal card-dark rounded-xl p-5 md:p-6"><div class="flex items-center gap-3 mb-4"><div class="w-10 h-10 rounded-lg gradient-accent flex items-center justify-center"><span class="iconify text-white text-xl" data-icon="mdi:source-branch"></span></div><h3 class="font-manrope text-base font-bold text-white">Multi-Branch Sync</h3></div><p class="text-xs text-gray-400 leading-relaxed mb-3">Real-time inventory sync across all branches. See stock at Liberty, Tariq Road, and Ichhra simultaneously. Transfer thaans between branches with one tap.</p><div class="flex items-center gap-2 text-xs text-accent-300 font-medium"><span class="iconify" data-icon="mdi:check-circle"></span><span>Live stock visibility across all locations</span></div></div>
-      <div class="reveal reveal-delay-1 card-dark rounded-xl p-5 md:p-6"><div class="flex items-center gap-3 mb-4"><div class="w-10 h-10 rounded-lg gradient-accent-soft flex items-center justify-center"><span class="iconify text-white text-xl" data-icon="mdi:cash-multiple"></span></div><h3 class="font-manrope text-base font-bold text-white">Wholesale + Retail Billing</h3></div><p class="text-xs text-gray-400 leading-relaxed mb-3">One screen, two price lists. Sell 5 thaans to a dealer at wholesale and 2 suits to a walk-in at retail — same bill.</p><div class="flex items-center gap-2 text-xs text-accent-300 font-medium"><span class="iconify" data-icon="mdi:check-circle"></span><span>Dual pricing on single invoice</span></div></div>
-      <div class="reveal reveal-delay-2 card-dark rounded-xl p-5 md:p-6"><div class="flex items-center gap-3 mb-4"><div class="w-10 h-10 rounded-lg gradient-accent flex items-center justify-center"><span class="iconify text-white text-xl" data-icon="mdi:calendar-star"></span></div><h3 class="font-manrope text-base font-bold text-white">Seasonal Collection Tracking</h3></div><p class="text-xs text-gray-400 leading-relaxed mb-3">Tag inventory by season — Eid Lawn, Winter Velvet, Wedding Chiffon. Auto-flag slow-moving collections.</p><div class="flex items-center gap-2 text-xs text-accent-300 font-medium"><span class="iconify" data-icon="mdi:check-circle"></span><span>Eid/Wedding season dashboards</span></div></div>
-      <div class="reveal reveal-delay-3 card-dark rounded-xl p-5 md:p-6"><div class="flex items-center gap-3 mb-4"><div class="w-10 h-10 rounded-lg gradient-accent-soft flex items-center justify-center"><span class="iconify text-white text-xl" data-icon="mdi:book-open-variant"></span></div><h3 class="font-manrope text-base font-bold text-white">Supplier & Vendor Ledger</h3></div><p class="text-xs text-gray-400 leading-relaxed mb-3">Digital khata-style ledgers for every supplier. See pending payments, credit limits, and purchase history per vendor.</p><div class="flex items-center gap-2 text-xs text-accent-300 font-medium"><span class="iconify" data-icon="mdi:check-circle"></span><span>Digital roznama — searchable</span></div></div>
-      <div class="reveal reveal-delay-4 card-dark rounded-xl p-5 md:p-6"><div class="flex items-center gap-3 mb-4"><div class="w-10 h-10 rounded-lg gradient-accent flex items-center justify-center"><span class="iconify text-white text-xl" data-icon="mdi:ruler"></span></div><h3 class="font-manrope text-base font-bold text-white">Thaan & Suit Unit System</h3></div><p class="text-xs text-gray-400 leading-relaxed mb-3">Sell by thaan, piece, suit, or meter. Auto-convert: 1 thaan = X suits = X meters. Track remaining lengths after cuts.</p><div class="flex items-center gap-2 text-xs text-accent-300 font-medium"><span class="iconify" data-icon="mdi:check-circle"></span><span>Thaan → Suit → Meter conversion</span></div></div>
-      <div class="reveal reveal-delay-5 card-dark rounded-xl p-5 md:p-6"><div class="flex items-center gap-3 mb-4"><div class="w-10 h-10 rounded-lg gradient-accent-soft flex items-center justify-center"><span class="iconify text-white text-xl" data-icon="mdi:chart-bar"></span></div><h3 class="font-manrope text-base font-bold text-white">Owner's Dashboard</h3></div><p class="text-xs text-gray-400 leading-relaxed mb-3">Daily sales by branch, hourly trends, cash vs. digital split — one screen. Check your phone and know every branch's performance.</p><div class="flex items-center gap-2 text-xs text-accent-300 font-medium"><span class="iconify" data-icon="mdi:check-circle"></span><span>Branch-by-branch P&L</span></div></div>
-    </div>
-  </div>
-</section>
+<section id="features" class="relative py-16 md:py-24 bg-charcoal-900 overflow-hidden"><div class="fabric-texture"></div><div class="max-w-7xl mx-auto px-4 md:px-6 relative z-10">
+<div class="reveal flex items-center gap-3 mb-3"><div class="w-8 h-1 gradient-accent rounded-full"></div><span class="text-xs font-semibold uppercase tracking-widest text-accent-400">Core Features</span></div>
+<h2 class="reveal reveal-delay-1 font-manrope text-2xl md:text-4xl font-bold text-white tracking-tight mb-3">Built Around How<br>Fabric Stores Actually Work</h2>
+<p class="reveal reveal-delay-2 text-sm text-gray-500 max-w-lg mb-12">Not a generic POS re-skinned. Every feature reflects how unstitched suit sellers, thaan merchants, and wholesale-retail hybrid operators run their daily business.</p>
+<div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
+<div class="reveal card-dark rounded-xl p-5 md:p-6"><div class="flex items-center gap-3 mb-4"><div class="w-10 h-10 rounded-lg gradient-accent flex items-center justify-center"><span class="iconify text-white text-xl" data-icon="mdi:source-branch"></span></div><h3 class="font-manrope text-base font-bold text-white">Multi-Branch Sync</h3></div><p class="text-xs text-gray-400 leading-relaxed mb-3">Real-time inventory sync across all branches. Transfer thaans between branches with one tap.</p><div class="flex items-center gap-2 text-xs text-accent-300 font-medium"><span class="iconify" data-icon="mdi:check-circle"></span><span>Live stock across all locations</span></div></div>
+<div class="reveal reveal-delay-1 card-dark rounded-xl p-5 md:p-6"><div class="flex items-center gap-3 mb-4"><div class="w-10 h-10 rounded-lg gradient-accent-soft flex items-center justify-center"><span class="iconify text-white text-xl" data-icon="mdi:cash-multiple"></span></div><h3 class="font-manrope text-base font-bold text-white">Wholesale + Retail Billing</h3></div><p class="text-xs text-gray-400 leading-relaxed mb-3">Two price lists, one screen. Sell 5 thaans to a dealer and 2 suits to a walk-in on the same bill.</p><div class="flex items-center gap-2 text-xs text-accent-300 font-medium"><span class="iconify" data-icon="mdi:check-circle"></span><span>Dual pricing on single invoice</span></div></div>
+<div class="reveal reveal-delay-2 card-dark rounded-xl p-5 md:p-6"><div class="flex items-center gap-3 mb-4"><div class="w-10 h-10 rounded-lg gradient-accent flex items-center justify-center"><span class="iconify text-white text-xl" data-icon="mdi:calendar-star"></span></div><h3 class="font-manrope text-base font-bold text-white">Seasonal Collection Tracking</h3></div><p class="text-xs text-gray-400 leading-relaxed mb-3">Tag by season — Eid Lawn, Winter Velvet, Wedding Chiffon. Auto-flag slow movers.</p><div class="flex items-center gap-2 text-xs text-accent-300 font-medium"><span class="iconify" data-icon="mdi:check-circle"></span><span>Eid/Wedding dashboards</span></div></div>
+<div class="reveal reveal-delay-3 card-dark rounded-xl p-5 md:p-6"><div class="flex items-center gap-3 mb-4"><div class="w-10 h-10 rounded-lg gradient-accent-soft flex items-center justify-center"><span class="iconify text-white text-xl" data-icon="mdi:book-open-variant"></span></div><h3 class="font-manrope text-base font-bold text-white">Supplier & Vendor Ledger</h3></div><p class="text-xs text-gray-400 leading-relaxed mb-3">Digital khata for every supplier. Pending payments, credit limits, purchase history per vendor.</p><div class="flex items-center gap-2 text-xs text-accent-300 font-medium"><span class="iconify" data-icon="mdi:check-circle"></span><span>Digital roznama</span></div></div>
+<div class="reveal reveal-delay-4 card-dark rounded-xl p-5 md:p-6"><div class="flex items-center gap-3 mb-4"><div class="w-10 h-10 rounded-lg gradient-accent flex items-center justify-center"><span class="iconify text-white text-xl" data-icon="mdi:ruler"></span></div><h3 class="font-manrope text-base font-bold text-white">Thaan & Suit Unit System</h3></div><p class="text-xs text-gray-400 leading-relaxed mb-3">Sell by thaan, piece, suit, or meter. Auto-convert: 1 thaan = X suits = X meters.</p><div class="flex items-center gap-2 text-xs text-accent-300 font-medium"><span class="iconify" data-icon="mdi:check-circle"></span><span>Thaan→Suit→Meter conversion</span></div></div>
+<div class="reveal reveal-delay-5 card-dark rounded-xl p-5 md:p-6"><div class="flex items-center gap-3 mb-4"><div class="w-10 h-10 rounded-lg gradient-accent-soft flex items-center justify-center"><span class="iconify text-white text-xl" data-icon="mdi:chart-bar"></span></div><h3 class="font-manrope text-base font-bold text-white">Owner's Dashboard</h3></div><p class="text-xs text-gray-400 leading-relaxed mb-3">Daily sales, hourly trends, cash vs. digital split — one screen. Check any branch from your phone.</p><div class="flex items-center gap-2 text-xs text-accent-300 font-medium"><span class="iconify" data-icon="mdi:check-circle"></span><span>Branch P&L in real time</span></div></div>
+</div></div></section>
 
 <div class="section-divider mx-6"></div>
 
 <!-- PRODUCT SCREENS -->
-<section id="screens" class="relative py-16 md:py-24 bg-charcoal-950 overflow-hidden">
-  <div class="fabric-texture"></div>
-  <div class="max-w-7xl mx-auto px-4 md:px-6 relative z-10">
-    <div class="reveal flex items-center gap-3 mb-3"><div class="w-8 h-1 gradient-accent-soft rounded-full"></div><span class="text-xs font-semibold uppercase tracking-widest text-accent-300">Product Preview</span></div>
-    <h2 class="reveal reveal-delay-1 font-manrope text-2xl md:text-4xl font-bold text-white tracking-tight mb-3">See Every Screen.<br>Click to Explore.</h2>
-    <p class="reveal reveal-delay-2 text-sm text-gray-500 max-w-lg mb-10">Dark interface built for long hours in busy showrooms. Click any screenshot to view full size.</p>
-
-    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
-      <div class="reveal screenshot-thumb" onclick="openLightbox(0)"><img src="https://z-cdn-media.chatglm.cn/files/5972a61d-a252-4eed-8adb-2077536969d7.png?auth_key=1884806340-2a5e4828749f4f5598bc7328c25d1a05-0-fc85484dc5020b4c828565d5da88677b" alt="Billing" class="w-full h-auto object-cover" style="min-height:180px;"><div class="overlay"><div class="flex flex-col items-center gap-1"><span class="iconify text-2xl text-accent-400" data-icon="mdi:magnify-plus"></span><span class="text-xs text-white font-medium">Click to expand</span></div></div><div class="absolute bottom-2 left-3 z-10"><p class="text-xs font-bold text-accent-300">Billing</p><p class="text-xs text-gray-500">Fast counter billing</p></div></div>
-      <div class="reveal reveal-delay-1 screenshot-thumb" onclick="openLightbox(1)"><img src="https://z-cdn-media.chatglm.cn/files/3cdb2383-9783-476e-9d69-993f726c2f6d.png?auth_key=1884806340-5b67173a489d48f4bfd1bd1939b6cccf-0-768c67d5e29e23cf89f88051ee63721a" alt="Inventory" class="w-full h-auto object-cover" style="min-height:180px;"><div class="overlay"><div class="flex flex-col items-center gap-1"><span class="iconify text-2xl text-accent-400" data-icon="mdi:magnify-plus"></span><span class="text-xs text-white font-medium">Click to expand</span></div></div><div class="absolute bottom-2 left-3 z-10"><p class="text-xs font-bold text-accent-300">Inventory</p><p class="text-xs text-gray-500">Thaan & suit tracking</p></div></div>
-      <div class="reveal reveal-delay-2 screenshot-thumb" onclick="openLightbox(2)"><img src="https://z-cdn-media.chatglm.cn/files/98da6ac8-838c-4b33-bf33-ac9a7bc529e2.png?auth_key=1884806340-bc87eebb10e1484f99f754c3877763ef-0-83b32b729bc299f4a9c28d5dad2ce84d" alt="History" class="w-full h-auto object-cover" style="min-height:180px;"><div class="overlay"><div class="flex flex-col items-center gap-1"><span class="iconify text-2xl text-accent-400" data-icon="mdi:magnify-plus"></span><span class="text-xs text-white font-medium">Click to expand</span></div></div><div class="absolute bottom-2 left-3 z-10"><p class="text-xs font-bold text-accent-300">History</p><p class="text-xs text-gray-500">Receipts & returns</p></div></div>
-      <div class="reveal reveal-delay-3 screenshot-thumb" onclick="openLightbox(3)"><img src="https://z-cdn-media.chatglm.cn/files/d7c5e977-6d90-45fa-a786-bb4b1df796db.png?auth_key=1884806340-2dee918b954d4fd58cfd796ffd9d5674-0-be09974e14bcc9f28a0f74801ce4efed" alt="Dashboard" class="w-full h-auto object-cover" style="min-height:180px;"><div class="overlay"><div class="flex flex-col items-center gap-1"><span class="iconify text-2xl text-accent-400" data-icon="mdi:magnify-plus"></span><span class="text-xs text-white font-medium">Click to expand</span></div></div><div class="absolute bottom-2 left-3 z-10"><p class="text-xs font-bold text-accent-300">Dashboard</p><p class="text-xs text-gray-500">Sales analytics</p></div></div>
-      <div class="reveal reveal-delay-4 screenshot-thumb" onclick="openLightbox(4)"><img src="https://z-cdn-media.chatglm.cn/files/d52f2add-bf62-441f-80f8-364a81864744.png?auth_key=1884806340-79baa052576d493ea14af532ba7aa045-0-eaa963566386d9e1cdd8ed0ac14c2627" alt="Settings" class="w-full h-auto object-cover" style="min-height:180px;"><div class="overlay"><div class="flex flex-col items-center gap-1"><span class="iconify text-2xl text-accent-400" data-icon="mdi:magnify-plus"></span><span class="text-xs text-white font-medium">Click to expand</span></div></div><div class="absolute bottom-2 left-3 z-10"><p class="text-xs font-bold text-accent-300">Settings</p><p class="text-xs text-gray-500">QR & shop profile</p></div></div>
-    </div>
-
-    <div class="reveal mt-6 flex flex-wrap gap-4 md:gap-8 items-center justify-center text-center">
-      <div class="flex items-center gap-2"><span class="iconify text-accent-400 text-lg" data-icon="mdi:lightning-bolt"></span><span class="text-xs text-gray-400"><span class="text-white font-semibold">2 sec</span> avg. billing</span></div>
-      <div class="flex items-center gap-2"><span class="iconify text-indigo-400 text-lg" data-icon="mdi:devices"></span><span class="text-xs text-gray-400"><span class="text-white font-semibold">Tablet, phone, PC</span></span></div>
-      <div class="flex items-center gap-2"><span class="iconify text-accent-400 text-lg" data-icon="mdi:wifi-off"></span><span class="text-xs text-gray-400"><span class="text-white font-semibold">Offline mode</span></span></div>
-      <div class="flex items-center gap-2"><span class="iconify text-indigo-400 text-lg" data-icon="mdi:printer"></span><span class="text-xs text-gray-400"><span class="text-white font-semibold">POS printer</span> + barcode scanner</span></div>
-    </div>
-  </div>
-</section>
+<section id="screens" class="relative py-16 md:py-24 bg-charcoal-950 overflow-hidden"><div class="fabric-texture"></div><div class="max-w-7xl mx-auto px-4 md:px-6 relative z-10">
+<div class="reveal flex items-center gap-3 mb-3"><div class="w-8 h-1 gradient-accent-soft rounded-full"></div><span class="text-xs font-semibold uppercase tracking-widest text-accent-300">Product Preview</span></div>
+<h2 class="reveal reveal-delay-1 font-manrope text-2xl md:text-4xl font-bold text-white tracking-tight mb-3">See Every Screen.<br>Click to Explore.</h2>
+<p class="reveal reveal-delay-2 text-sm text-gray-500 max-w-lg mb-10">Dark interface for long hours in showrooms. Click any screenshot to view full size.</p>
+<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
+<div class="reveal screenshot-thumb" onclick="openLightbox(0)"><img src="https://z-cdn-media.chatglm.cn/files/5972a61d-a252-4eed-8adb-2077536969d7.png?auth_key=1884806340-2a5e4828749f4f5598bc7328c25d1a05-0-fc85484dc5020b4c828565d5da88677b" alt="Billing" class="w-full h-auto object-cover" style="min-height:180px;"><div class="overlay"><div class="flex flex-col items-center gap-1"><span class="iconify text-2xl text-accent-400" data-icon="mdi:magnify-plus"></span><span class="text-xs text-white font-medium">Click to expand</span></div></div><div class="absolute bottom-2 left-3 z-10"><p class="text-xs font-bold text-accent-300">Billing</p></div></div>
+<div class="reveal reveal-delay-1 screenshot-thumb" onclick="openLightbox(1)"><img src="https://z-cdn-media.chatglm.cn/files/3cdb2383-9783-476e-9d69-993f726c2f6d.png?auth_key=1884806340-5b67173a489d48f4bfd1bd1939b6cccf-0-768c67d5e29e23cf89f88051ee63721a" alt="Inventory" class="w-full h-auto object-cover" style="min-height:180px;"><div class="overlay"><div class="flex flex-col items-center gap-1"><span class="iconify text-2xl text-accent-400" data-icon="mdi:magnify-plus"></span><span class="text-xs text-white font-medium">Click to expand</span></div></div><div class="absolute bottom-2 left-3 z-10"><p class="text-xs font-bold text-accent-300">Inventory</p></div></div>
+<div class="reveal reveal-delay-2 screenshot-thumb" onclick="openLightbox(2)"><img src="https://z-cdn-media.chatglm.cn/files/98da6ac8-838c-4b33-bf33-ac9a7bc529e2.png?auth_key=1884806340-bc87eebb10e1484f99f754c3877763ef-0-83b32b729bc299f4a9c28d5dad2ce84d" alt="History" class="w-full h-auto object-cover" style="min-height:180px;"><div class="overlay"><div class="flex flex-col items-center gap-1"><span class="iconify text-2xl text-accent-400" data-icon="mdi:magnify-plus"></span><span class="text-xs text-white font-medium">Click to expand</span></div></div><div class="absolute bottom-2 left-3 z-10"><p class="text-xs font-bold text-accent-300">History</p></div></div>
+<div class="reveal reveal-delay-3 screenshot-thumb" onclick="openLightbox(3)"><img src="https://z-cdn-media.chatglm.cn/files/d7c5e977-6d90-45fa-a786-bb4b1df796db.png?auth_key=1884806340-2dee918b954d4fd58cfd796ffd9d5674-0-be09974e14bcc9f28a0f74801ce4efed" alt="Dashboard" class="w-full h-auto object-cover" style="min-height:180px;"><div class="overlay"><div class="flex flex-col items-center gap-1"><span class="iconify text-2xl text-accent-400" data-icon="mdi:magnify-plus"></span><span class="text-xs text-white font-medium">Click to expand</span></div></div><div class="absolute bottom-2 left-3 z-10"><p class="text-xs font-bold text-accent-300">Dashboard</p></div></div>
+<div class="reveal reveal-delay-4 screenshot-thumb" onclick="openLightbox(4)"><img src="https://z-cdn-media.chatglm.cn/files/d52f2add-bf62-441f-80f8-364a81864744.png?auth_key=1884806340-79baa052576d493ea14af532ba7aa045-0-eaa963566386d9e1cdd8ed0ac14c2627" alt="Settings" class="w-full h-auto object-cover" style="min-height:180px;"><div class="overlay"><div class="flex flex-col items-center gap-1"><span class="iconify text-2xl text-accent-400" data-icon="mdi:magnify-plus"></span><span class="text-xs text-white font-medium">Click to expand</span></div></div><div class="absolute bottom-2 left-3 z-10"><p class="text-xs font-bold text-accent-300">Settings</p></div></div>
+</div>
+<div class="reveal mt-6 flex flex-wrap gap-4 md:gap-8 items-center justify-center text-center">
+<div class="flex items-center gap-2"><span class="iconify text-accent-400 text-lg" data-icon="mdi:lightning-bolt"></span><span class="text-xs text-gray-400"><span class="text-white font-semibold">2 sec</span> avg. billing</span></div>
+<div class="flex items-center gap-2"><span class="iconify text-indigo-400 text-lg" data-icon="mdi:devices"></span><span class="text-xs text-gray-400"><span class="text-white font-semibold">Tablet, phone, PC</span></span></div>
+<div class="flex items-center gap-2"><span class="iconify text-accent-400 text-lg" data-icon="mdi:wifi-off"></span><span class="text-xs text-gray-400"><span class="text-white font-semibold">Offline mode</span></span></div>
+<div class="flex items-center gap-2"><span class="iconify text-indigo-400 text-lg" data-icon="mdi:printer"></span><span class="text-xs text-gray-400"><span class="text-white font-semibold">POS printer</span> + barcode scanner</span></div>
+</div></div></section>
 
 <div class="section-divider mx-6"></div>
 
 <!-- MOBILE ACCESS -->
-<section id="mobile" class="relative py-16 md:py-24 bg-charcoal-900 overflow-hidden">
-  <div class="fabric-texture"></div>
-  <div class="max-w-7xl mx-auto px-4 md:px-6 relative z-10">
-    <div class="reveal flex items-center gap-3 mb-3"><div class="w-8 h-1 gradient-accent rounded-full"></div><span class="text-xs font-semibold uppercase tracking-widest text-accent-400">Mobile Access</span></div>
-    <h2 class="reveal reveal-delay-1 font-manrope text-2xl md:text-4xl font-bold text-white tracking-tight mb-3">Live Sales. Live Stock.<br>Right From Your Phone.</h2>
-    <p class="reveal reveal-delay-2 text-sm text-gray-500 max-w-lg mb-10">Whether you're at a supplier's warehouse in Faisalabad or visiting family in Dubai — your store's pulse is always in your pocket.</p>
-
-    <div class="flex flex-col lg:flex-row items-center gap-8 lg:gap-12">
-      <div class="reveal lg:w-1/3 flex justify-center">
-        <div class="animate-float" style="width:260px;height:520px;border-radius:32px;border:3px solid rgba(124,58,237,0.3);background:#1A1A1A;position:relative;overflow:hidden;box-shadow:0 0 40px rgba(124,58,237,0.12),20px 20px 60px rgba(0,0,0,0.5);">
-          <div style="position:absolute;top:8px;left:50%;transform:translateX(-50%);width:80px;height:6px;border-radius:3px;background:#2D2D2D;"></div>
-          <div style="position:absolute;top:16px;left:8px;right:8px;bottom:8px;border-radius:24px;overflow:hidden;background:#1A1A1A;">
-            <div class="p-3 pt-4 h-full flex flex-col">
-              <div class="flex items-center justify-between mb-3"><div><p class="text-xs text-gray-500">Dashboard</p><p class="text-sm font-bold text-white">My Shop</p></div><div class="w-6 h-6 rounded-full bg-accent-500/20 flex items-center justify-center"><span class="iconify text-accent-400 text-xs" data-icon="mdi:bell"></span></div></div>
-              <div class="rounded-lg bg-charcoal-700 p-2.5 mb-2 border border-accent-500/10"><div class="flex items-center justify-between mb-1"><span class="text-xs text-gray-400">Today's Sales</span><span class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span></div><p class="text-lg font-bold text-white">Rs 68,070</p><div class="flex items-center gap-1 mt-1"><span class="iconify text-green-400 text-xs" data-icon="mdi:arrow-up"></span><span class="text-xs text-green-400">+12% vs yesterday</span></div></div>
-              <div class="rounded-lg bg-charcoal-700 p-2.5 mb-2 border border-indigo-500/10"><p class="text-xs text-gray-400 mb-1.5">Branch Status</p><div class="space-y-1"><div class="flex items-center justify-between"><span class="text-xs text-gray-300">Liberty Branch</span><span class="text-xs text-green-400 font-medium">Rs 42,300</span></div><div class="flex items-center justify-between"><span class="text-xs text-gray-300">Tariq Road</span><span class="text-xs text-green-400 font-medium">Rs 25,770</span></div></div></div>
-              <div class="grid grid-cols-2 gap-2 mb-2"><div class="rounded-lg bg-charcoal-700 p-2 border border-gray-700/30"><p class="text-xs text-gray-500">Bills</p><p class="text-sm font-bold text-white">47</p></div><div class="rounded-lg bg-charcoal-700 p-2 border border-gray-700/30"><p class="text-xs text-gray-500">Items Sold</p><p class="text-sm font-bold text-white">132</p></div></div>
-              <div class="rounded-lg bg-charcoal-700 p-2 border border-accent-500/10 flex-1"><p class="text-xs text-gray-400 mb-1">Hourly Trend</p><svg viewBox="0 0 200 60" class="w-full h-auto"><polyline fill="none" stroke="#8B5CF6" stroke-width="1.5" stroke-linecap="round" points="10,45 30,38 50,30 70,25 90,20 110,28 130,15 150,18 170,12 190,10"/><polyline fill="rgba(139,92,246,0.1)" stroke="none" points="10,45 30,38 50,30 70,25 90,20 110,28 130,15 150,18 170,12 190,10 190,60 10,60"/></svg></div>
-              <div class="flex items-center justify-around pt-2 border-t border-gray-700/30 mt-1"><div class="flex flex-col items-center"><span class="iconify text-accent-400 text-sm" data-icon="mdi:view-dashboard"></span><span class="text-xs text-accent-400">Dashboard</span></div><div class="flex flex-col items-center"><span class="iconify text-gray-500 text-sm" data-icon="mdi:cart"></span><span class="text-xs text-gray-500">Billing</span></div><div class="flex flex-col items-center"><span class="iconify text-gray-500 text-sm" data-icon="mdi:package-variant"></span><span class="text-xs text-gray-500">Inventory</span></div><div class="flex flex-col items-center"><span class="iconify text-gray-500 text-sm" data-icon="mdi:bell-outline"></span><span class="text-xs text-gray-500">Reminder</span></div></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="lg:w-2/3 grid md:grid-cols-2 gap-4">
-        <div class="reveal card-dark rounded-xl p-5"><div class="flex items-center gap-3 mb-3"><div class="w-9 h-9 rounded-lg gradient-accent flex items-center justify-center"><span class="iconify text-white text-lg" data-icon="mdi:cellphone"></span></div><h3 class="font-manrope text-sm font-bold text-white">Live Sales Dashboard</h3></div><p class="text-xs text-gray-400 leading-relaxed">See today's total sales, hourly trends, and cash vs. digital split — updated every minute.</p></div>
-        <div class="reveal reveal-delay-1 card-dark rounded-xl p-5"><div class="flex items-center gap-3 mb-3"><div class="w-9 h-9 rounded-lg gradient-accent-soft flex items-center justify-center"><span class="iconify text-white text-lg" data-icon="mdi:package-variant-closed"></span></div><h3 class="font-manrope text-sm font-bold text-white">Live Product & Inventory</h3></div><p class="text-xs text-gray-400 leading-relaxed">Search any product. See current stock across all branches instantly.</p></div>
-        <div class="reveal reveal-delay-2 card-dark rounded-xl p-5"><div class="flex items-center gap-3 mb-3"><div class="w-9 h-9 rounded-lg gradient-accent flex items-center justify-center"><span class="iconify text-white text-lg" data-icon="mdi:bell-ring"></span></div><h3 class="font-manrope text-sm font-bold text-white">Smart Purchase Reminders</h3></div><p class="text-xs text-gray-400 leading-relaxed">Get notified when stock hits reorder thresholds. Seasonal reminders before Eid.</p></div>
-        <div class="reveal reveal-delay-3 card-dark rounded-xl p-5"><div class="flex items-center gap-3 mb-3"><div class="w-9 h-9 rounded-lg gradient-accent-soft flex items-center justify-center"><span class="iconify text-white text-lg" data-icon="mdi:account-supervisor"></span></div><h3 class="font-manrope text-sm font-bold text-white">Branch Performance Alerts</h3></div><p class="text-xs text-gray-400 leading-relaxed">Daily summary at 9 PM. Push alerts for cash discrepancies.</p></div>
-      </div>
-    </div>
-  </div>
-</section>
+<section id="mobile" class="relative py-16 md:py-24 bg-charcoal-900 overflow-hidden"><div class="fabric-texture"></div><div class="max-w-7xl mx-auto px-4 md:px-6 relative z-10">
+<div class="reveal flex items-center gap-3 mb-3"><div class="w-8 h-1 gradient-accent rounded-full"></div><span class="text-xs font-semibold uppercase tracking-widest text-accent-400">Mobile Access</span></div>
+<h2 class="reveal reveal-delay-1 font-manrope text-2xl md:text-4xl font-bold text-white tracking-tight mb-3">Live Sales. Live Stock.<br>Right From Your Phone.</h2>
+<p class="reveal reveal-delay-2 text-sm text-gray-500 max-w-lg mb-10">Your store's pulse is always in your pocket — every sale, every stock movement, every branch.</p>
+<div class="flex flex-col lg:flex-row items-center gap-8 lg:gap-12">
+<div class="reveal lg:w-1/3 flex justify-center"><div class="animate-float" style="width:260px;height:520px;border-radius:32px;border:3px solid rgba(124,58,237,.3);background:#1A1A1A;position:relative;overflow:hidden;box-shadow:0 0 40px rgba(124,58,237,.12),20px 20px 60px rgba(0,0,0,.5);"><div style="position:absolute;top:8px;left:50%;transform:translateX(-50%);width:80px;height:6px;border-radius:3px;background:#2D2D2D;"></div><div style="position:absolute;top:16px;left:8px;right:8px;bottom:8px;border-radius:24px;overflow:hidden;background:#1A1A1A;"><div class="p-3 pt-4 h-full flex flex-col"><div class="flex items-center justify-between mb-3"><div><p class="text-xs text-gray-500">Dashboard</p><p class="text-sm font-bold text-white">My Shop</p></div><div class="w-6 h-6 rounded-full bg-accent-500/20 flex items-center justify-center"><span class="iconify text-accent-400 text-xs" data-icon="mdi:bell"></span></div></div><div class="rounded-lg bg-charcoal-700 p-2.5 mb-2 border border-accent-500/10"><div class="flex items-center justify-between mb-1"><span class="text-xs text-gray-400">Today's Sales</span><span class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span></div><p class="text-lg font-bold text-white">Rs 68,070</p><div class="flex items-center gap-1 mt-1"><span class="iconify text-green-400 text-xs" data-icon="mdi:arrow-up"></span><span class="text-xs text-green-400">+12% vs yesterday</span></div></div><div class="rounded-lg bg-charcoal-700 p-2.5 mb-2 border border-indigo-500/10"><p class="text-xs text-gray-400 mb-1.5">Branch Status</p><div class="space-y-1"><div class="flex items-center justify-between"><span class="text-xs text-gray-300">Liberty Branch</span><span class="text-xs text-green-400 font-medium">Rs 42,300</span></div><div class="flex items-center justify-between"><span class="text-xs text-gray-300">Tariq Road</span><span class="text-xs text-green-400 font-medium">Rs 25,770</span></div></div></div><div class="grid grid-cols-2 gap-2 mb-2"><div class="rounded-lg bg-charcoal-700 p-2 border border-gray-700/30"><p class="text-xs text-gray-500">Bills</p><p class="text-sm font-bold text-white">47</p></div><div class="rounded-lg bg-charcoal-700 p-2 border border-gray-700/30"><p class="text-xs text-gray-500">Items Sold</p><p class="text-sm font-bold text-white">132</p></div></div><div class="rounded-lg bg-charcoal-700 p-2 border border-accent-500/10 flex-1"><p class="text-xs text-gray-400 mb-1">Hourly Trend</p><svg viewBox="0 0 200 60" class="w-full h-auto"><polyline fill="none" stroke="#8B5CF6" stroke-width="1.5" stroke-linecap="round" points="10,45 30,38 50,30 70,25 90,20 110,28 130,15 150,18 170,12 190,10"/><polyline fill="rgba(139,92,246,.1)" stroke="none" points="10,45 30,38 50,30 70,25 90,20 110,28 130,15 150,18 170,12 190,10 190,60 10,60"/></svg></div><div class="flex items-center justify-around pt-2 border-t border-gray-700/30 mt-1"><div class="flex flex-col items-center"><span class="iconify text-accent-400 text-sm" data-icon="mdi:view-dashboard"></span><span class="text-xs text-accent-400">Dashboard</span></div><div class="flex flex-col items-center"><span class="iconify text-gray-500 text-sm" data-icon="mdi:cart"></span><span class="text-xs text-gray-500">Billing</span></div><div class="flex flex-col items-center"><span class="iconify text-gray-500 text-sm" data-icon="mdi:package-variant"></span><span class="text-xs text-gray-500">Inventory</span></div><div class="flex flex-col items-center"><span class="iconify text-gray-500 text-sm" data-icon="mdi:bell-outline"></span><span class="text-xs text-gray-500">Reminder</span></div></div></div></div></div></div>
+<div class="lg:w-2/3 grid md:grid-cols-2 gap-4">
+<div class="reveal card-dark rounded-xl p-5"><div class="flex items-center gap-3 mb-3"><div class="w-9 h-9 rounded-lg gradient-accent flex items-center justify-center"><span class="iconify text-white text-lg" data-icon="mdi:cellphone"></span></div><h3 class="font-manrope text-sm font-bold text-white">Live Sales Dashboard</h3></div><p class="text-xs text-gray-400 leading-relaxed">Today's sales, hourly trends, cash vs. digital — updated every minute.</p></div>
+<div class="reveal reveal-delay-1 card-dark rounded-xl p-5"><div class="flex items-center gap-3 mb-3"><div class="w-9 h-9 rounded-lg gradient-accent-soft flex items-center justify-center"><span class="iconify text-white text-lg" data-icon="mdi:package-variant-closed"></span></div><h3 class="font-manrope text-sm font-bold text-white">Live Product & Inventory</h3></div><p class="text-xs text-gray-400 leading-relaxed">Search any product. Stock across all branches instantly.</p></div>
+<div class="reveal reveal-delay-2 card-dark rounded-xl p-5"><div class="flex items-center gap-3 mb-3"><div class="w-9 h-9 rounded-lg gradient-accent flex items-center justify-center"><span class="iconify text-white text-lg" data-icon="mdi:bell-ring"></span></div><h3 class="font-manrope text-sm font-bold text-white">Smart Purchase Reminders</h3></div><p class="text-xs text-gray-400 leading-relaxed">Stock reorder thresholds. Seasonal reminders before Eid.</p></div>
+<div class="reveal reveal-delay-3 card-dark rounded-xl p-5"><div class="flex items-center gap-3 mb-3"><div class="w-9 h-9 rounded-lg gradient-accent-soft flex items-center justify-center"><span class="iconify text-white text-lg" data-icon="mdi:account-supervisor"></span></div><h3 class="font-manrope text-sm font-bold text-white">Branch Performance Alerts</h3></div><p class="text-xs text-gray-400 leading-relaxed">Daily 9 PM summary per branch. Cash discrepancy push alerts.</p></div>
+</div></div></div></section>
 
 <div class="section-divider mx-6"></div>
 
 <!-- PURCHASE REMINDERS -->
-<section id="reminders" class="relative py-16 md:py-24 bg-charcoal-950 overflow-hidden">
-  <div class="fabric-texture"></div>
-  <div class="max-w-7xl mx-auto px-4 md:px-6 relative z-10">
-    <div class="reveal flex items-center gap-3 mb-3"><div class="w-8 h-1 gradient-accent-soft rounded-full"></div><span class="text-xs font-semibold uppercase tracking-widest text-accent-300">Purchase Reminders</span></div>
-    <h2 class="reveal reveal-delay-1 font-manrope text-2xl md:text-4xl font-bold text-white tracking-tight mb-3">Never Miss a Reorder.<br>Never Overstock Dead Fabric.</h2>
-    <p class="reveal reveal-delay-2 text-sm text-gray-500 max-w-lg mb-10">Karigar watches your stock levels and seasonal patterns — then nudges you at exactly the right time.</p>
-
-    <div class="grid md:grid-cols-2 gap-5 mb-8">
-      <div class="reveal card-accent-border rounded-xl p-5 md:p-6">
-        <h3 class="font-manrope text-sm font-bold text-white mb-4">How Reminders Work</h3>
-        <div class="space-y-3">
-          <div class="reminder-row flex items-start gap-3"><div class="w-8 h-8 rounded-lg bg-red-500/15 flex items-center justify-center mt-0.5 shrink-0"><span class="iconify text-red-400 text-lg" data-icon="mdi:alert-circle"></span></div><div><p class="text-xs font-bold text-white">Low Stock Alerts</p><p class="text-xs text-gray-400">Push notification with item name, current stock, and suggested reorder qty.</p></div></div>
-          <div class="reminder-row flex items-start gap-3"><div class="w-8 h-8 rounded-lg bg-accent-500/15 flex items-center justify-center mt-0.5 shrink-0"><span class="iconify text-accent-400 text-lg" data-icon="mdi:calendar-clock"></span></div><div><p class="text-xs font-bold text-white">Seasonal Pre-Orders</p><p class="text-xs text-gray-400">2 weeks before Eid or wedding season — based on last year's sell-through rates.</p></div></div>
-          <div class="reminder-row flex items-start gap-3"><div class="w-8 h-8 rounded-lg bg-yellow-500/15 flex items-center justify-center mt-0.5 shrink-0"><span class="iconify text-yellow-400 text-lg" data-icon="mdi:cash-remove"></span></div><div><p class="text-xs font-bold text-white">Supplier Payment Due</p><p class="text-xs text-gray-400">3 days before any supplier payment — amount, vendor, link to ledger.</p></div></div>
-          <div class="reminder-row flex items-start gap-3"><div class="w-8 h-8 rounded-lg bg-green-500/15 flex items-center justify-center mt-0.5 shrink-0"><span class="iconify text-green-400 text-lg" data-icon="mdi:trending-down"></span></div><div><p class="text-xs font-bold text-white">Dead Stock Warnings</p><p class="text-xs text-gray-400">Any item unsold 30+ days gets flagged. Suggests discount or branch transfer.</p></div></div>
-        </div>
-      </div>
-
-      <div class="reveal reveal-delay-1 card-accent-border rounded-xl p-5 md:p-6">
-        <h3 class="font-manrope text-sm font-bold text-white mb-4">What You'll See on Your Phone</h3>
-        <div class="space-y-3">
-          <div class="rounded-lg bg-charcoal-800 p-4 border border-red-500/15"><div class="flex items-center gap-2 mb-2"><span class="iconify text-red-400" data-icon="mdi:alert-circle"></span><span class="text-xs font-bold text-red-400 uppercase tracking-wider">Low Stock</span><span class="text-xs text-gray-500 ml-auto">2 min ago</span></div><p class="text-sm font-semibold text-white mb-1">Cotton Thaan A — Only 3 pcs left</p><p class="text-xs text-gray-400">Liberty branch. Suggested reorder: 15 pcs from Faisalabad Mill #3.</p><div class="flex gap-2 mt-2"><button onclick="showToast('Reorder feature — available in live demo')" class="text-xs font-medium text-accent-400 bg-accent-500/10 px-3 py-1 rounded hover:bg-accent-500/20 transition-colors">Reorder Now</button><button class="text-xs font-medium text-gray-400 bg-gray-700/30 px-3 py-1 rounded">Dismiss</button></div></div>
-          <div class="rounded-lg bg-charcoal-800 p-4 border border-accent-500/15"><div class="flex items-center gap-2 mb-2"><span class="iconify text-accent-400" data-icon="mdi:calendar-clock"></span><span class="text-xs font-bold text-accent-400 uppercase tracking-wider">Seasonal</span><span class="text-xs text-gray-500 ml-auto">Today</span></div><p class="text-sm font-semibold text-white mb-1">Eid Lawn Pre-Order Reminder</p><p class="text-xs text-gray-400">Eid is 14 days away. Last year you sold 420 lawn suits in the final 10 days.</p><div class="flex gap-2 mt-2"><button onclick="showToast('Seasonal analytics — available in live demo')" class="text-xs font-medium text-accent-400 bg-accent-500/10 px-3 py-1 rounded hover:bg-accent-500/20 transition-colors">View Top Sellers</button><button class="text-xs font-medium text-gray-400 bg-gray-700/30 px-3 py-1 rounded">Set Thresholds</button></div></div>
-          <div class="rounded-lg bg-charcoal-800 p-4 border border-yellow-500/15"><div class="flex items-center gap-2 mb-2"><span class="iconify text-yellow-400" data-icon="mdi:cash-remove"></span><span class="text-xs font-bold text-yellow-400 uppercase tracking-wider">Payment Due</span><span class="text-xs text-gray-500 ml-auto">Tomorrow</span></div><p class="text-sm font-semibold text-white mb-1">Faisalabad Mill #3 — Rs 45,000 due</p><p class="text-xs text-gray-400">Payment due in 3 days. Last purchase: 20 Cotton Thaan A on March 10.</p><div class="flex gap-2 mt-2"><button onclick="showToast('Supplier ledger — available in live demo')" class="text-xs font-medium text-accent-400 bg-accent-500/10 px-3 py-1 rounded hover:bg-accent-500/20 transition-colors">View Ledger</button><button class="text-xs font-medium text-gray-400 bg-gray-700/30 px-3 py-1 rounded">Mark Paid</button></div></div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
+<section id="reminders" class="relative py-16 md:py-24 bg-charcoal-950 overflow-hidden"><div class="fabric-texture"></div><div class="max-w-7xl mx-auto px-4 md:px-6 relative z-10">
+<div class="reveal flex items-center gap-3 mb-3"><div class="w-8 h-1 gradient-accent-soft rounded-full"></div><span class="text-xs font-semibold uppercase tracking-widest text-accent-300">Purchase Reminders</span></div>
+<h2 class="reveal reveal-delay-1 font-manrope text-2xl md:text-4xl font-bold text-white tracking-tight mb-3">Never Miss a Reorder.<br>Never Overstock Dead Fabric.</h2>
+<p class="reveal reveal-delay-2 text-sm text-gray-500 max-w-lg mb-10">Karigar watches stock levels and seasonal patterns — then nudges you at the right time.</p>
+<div class="grid md:grid-cols-2 gap-5 mb-8">
+<div class="reveal card-accent-border rounded-xl p-5 md:p-6"><h3 class="font-manrope text-sm font-bold text-white mb-4">How Reminders Work</h3><div class="space-y-3">
+<div class="reminder-row flex items-start gap-3"><div class="w-8 h-8 rounded-lg bg-red-500/15 flex items-center justify-center mt-0.5 shrink-0"><span class="iconify text-red-400 text-lg" data-icon="mdi:alert-circle"></span></div><div><p class="text-xs font-bold text-white">Low Stock Alerts</p><p class="text-xs text-gray-400">Push notification with item name, stock, suggested reorder qty.</p></div></div>
+<div class="reminder-row flex items-start gap-3"><div class="w-8 h-8 rounded-lg bg-accent-500/15 flex items-center justify-center mt-0.5 shrink-0"><span class="iconify text-accent-400 text-lg" data-icon="mdi:calendar-clock"></span></div><div><p class="text-xs font-bold text-white">Seasonal Pre-Orders</p><p class="text-xs text-gray-400">2 weeks before Eid — based on last year's sell-through rates.</p></div></div>
+<div class="reminder-row flex items-start gap-3"><div class="w-8 h-8 rounded-lg bg-yellow-500/15 flex items-center justify-center mt-0.5 shrink-0"><span class="iconify text-yellow-400 text-lg" data-icon="mdi:cash-remove"></span></div><div><p class="text-xs font-bold text-white">Supplier Payment Due</p><p class="text-xs text-gray-400">3 days before supplier payment — amount, vendor, ledger link.</p></div></div>
+<div class="reminder-row flex items-start gap-3"><div class="w-8 h-8 rounded-lg bg-green-500/15 flex items-center justify-center mt-0.5 shrink-0"><span class="iconify text-green-400 text-lg" data-icon="mdi:trending-down"></span></div><div><p class="text-xs font-bold text-white">Dead Stock Warnings</p><p class="text-xs text-gray-400">30+ day unsold items flagged. Suggests discount or branch transfer.</p></div></div>
+</div></div>
+<div class="reveal reveal-delay-1 card-accent-border rounded-xl p-5 md:p-6"><h3 class="font-manrope text-sm font-bold text-white mb-4">What You'll See</h3><div class="space-y-3">
+<div class="rounded-lg bg-charcoal-800 p-4 border border-red-500/15"><div class="flex items-center gap-2 mb-2"><span class="iconify text-red-400" data-icon="mdi:alert-circle"></span><span class="text-xs font-bold text-red-400 uppercase tracking-wider">Low Stock</span><span class="text-xs text-gray-500 ml-auto">2 min ago</span></div><p class="text-sm font-semibold text-white mb-1">Cotton Thaan A — Only 3 pcs left</p><p class="text-xs text-gray-400">Liberty branch. Reorder: 15 pcs from Mill #3.</p><div class="flex gap-2 mt-2"><button onclick="showToast('Reorder — available in live demo')" class="text-xs font-medium text-accent-400 bg-accent-500/10 px-3 py-1 rounded hover:bg-accent-500/20 transition-colors">Reorder Now</button><button class="text-xs font-medium text-gray-400 bg-gray-700/30 px-3 py-1 rounded">Dismiss</button></div></div>
+<div class="rounded-lg bg-charcoal-800 p-4 border border-accent-500/15"><div class="flex items-center gap-2 mb-2"><span class="iconify text-accent-400" data-icon="mdi:calendar-clock"></span><span class="text-xs font-bold text-accent-400 uppercase tracking-wider">Seasonal</span><span class="text-xs text-gray-500 ml-auto">Today</span></div><p class="text-sm font-semibold text-white mb-1">Eid Lawn Pre-Order Reminder</p><p class="text-xs text-gray-400">Eid is 14 days away. Last year: 420 lawn suits in final 10 days.</p><div class="flex gap-2 mt-2"><button onclick="showToast('Seasonal analytics — available in live demo')" class="text-xs font-medium text-accent-400 bg-accent-500/10 px-3 py-1 rounded hover:bg-accent-500/20 transition-colors">View Top Sellers</button><button class="text-xs font-medium text-gray-400 bg-gray-700/30 px-3 py-1 rounded">Set Thresholds</button></div></div>
+<div class="rounded-lg bg-charcoal-800 p-4 border border-yellow-500/15"><div class="flex items-center gap-2 mb-2"><span class="iconify text-yellow-400" data-icon="mdi:cash-remove"></span><span class="text-xs font-bold text-yellow-400 uppercase tracking-wider">Payment Due</span><span class="text-xs text-gray-500 ml-auto">Tomorrow</span></div><p class="text-sm font-semibold text-white mb-1">Faisalabad Mill #3 — Rs 45,000 due</p><p class="text-xs text-gray-400">Payment due in 3 days.</p><div class="flex gap-2 mt-2"><button onclick="showToast('Supplier ledger — available in live demo')" class="text-xs font-medium text-accent-400 bg-accent-500/10 px-3 py-1 rounded hover:bg-accent-500/20 transition-colors">View Ledger</button><button class="text-xs font-medium text-gray-400 bg-gray-700/30 px-3 py-1 rounded">Mark Paid</button></div></div>
+</div></div></div></div></section>
 
 <div class="section-divider mx-6"></div>
 
 <!-- RESULTS -->
-<section id="results" class="relative py-16 md:py-24 bg-charcoal-900 overflow-hidden">
-  <div class="fabric-texture"></div>
-  <div class="max-w-7xl mx-auto px-4 md:px-6 relative z-10">
-    <div class="reveal flex items-center gap-3 mb-3"><div class="w-8 h-1 gradient-accent rounded-full"></div><span class="text-xs font-semibold uppercase tracking-widest text-accent-400">Proven Results</span></div>
-    <h2 class="reveal reveal-delay-1 font-manrope text-2xl md:text-4xl font-bold text-white tracking-tight mb-3">Numbers From<br>Real Deployments.</h2>
-    <p class="reveal reveal-delay-2 text-sm text-gray-500 max-w-lg mb-10">Measured outcomes from fabric stores that switched to Karigar.</p>
-
-    <div class="grid md:grid-cols-2 gap-5 mb-10">
-      <div class="reveal card-dark rounded-xl p-6 md:p-8"><div class="flex items-center gap-2 mb-4"><span class="text-xs font-bold text-accent-300 bg-accent-500/10 px-3 py-1 rounded uppercase tracking-wider">Case Study 01</span></div><h3 class="font-manrope text-lg md:text-xl font-bold text-white mb-2">Al-Karam's Eid Season</h3><p class="text-xs text-gray-500 mb-4">8 branches · Lahore · Eid Lawn 2024</p><div class="grid grid-cols-3 gap-3 mb-5"><div class="bg-charcoal-800 rounded-lg p-3 text-center"><p class="stat-number text-lg md:text-xl">72%</p><p class="text-xs text-gray-500 mt-1">Fewer mismatches</p></div><div class="bg-charcoal-800 rounded-lg p-3 text-center"><p class="stat-number text-lg md:text-xl">3.2x</p><p class="text-xs text-gray-500 mt-1">Faster billing</p></div><div class="bg-charcoal-800 rounded-lg p-3 text-center"><p class="stat-number text-lg md:text-xl">Rs 4L</p><p class="text-xs text-gray-500 mt-1">Saved dead stock</p></div></div><p class="text-xs text-gray-400 leading-relaxed"><span class="text-accent-300 font-semibold">Before:</span> Branch managers called 15+ times daily for stock. Eid rush = 40-min waits.<br><span class="text-indigo-300 font-semibold">After:</span> Live visibility ended phone-tag. Billing in 2 min. Seasonal tracking flagged slow designs by day 3.</p></div>
-      <div class="reveal reveal-delay-1 card-dark rounded-xl p-6 md:p-8"><div class="flex items-center gap-2 mb-4"><span class="text-xs font-bold text-accent-300 bg-accent-500/10 px-3 py-1 rounded uppercase tracking-wider">Case Study 02</span></div><h3 class="font-manrope text-lg md:text-xl font-bold text-white mb-2">Bonanza's Branch Network</h3><p class="text-xs text-gray-500 mb-4">15 branches · 4 cities · Wholesale + Retail</p><div class="grid grid-cols-3 gap-3 mb-5"><div class="bg-charcoal-800 rounded-lg p-3 text-center"><p class="stat-number text-lg md:text-xl">100%</p><p class="text-xs text-gray-500 mt-1">Branch visibility</p></div><div class="bg-charcoal-800 rounded-lg p-3 text-center"><p class="stat-number text-lg md:text-xl">8min</p><p class="text-xs text-gray-500 mt-1">Owner review</p></div><div class="bg-charcoal-800 rounded-lg p-3 text-center"><p class="stat-number text-lg md:text-xl">Rs 12L</p><p class="text-xs text-gray-500 mt-1">Reconcil. saved</p></div></div><p class="text-xs text-gray-400 leading-relaxed"><span class="text-accent-300 font-semibold">Before:</span> Owner traveled weekly for verification. Annual reconciliation = 3 weeks.<br><span class="text-indigo-300 font-semibold">After:</span> Full P&L per branch from phone in 8 min. Dual pricing eliminated errors.</p></div>
-    </div>
-
-    <div class="reveal relative rounded-xl overflow-hidden border border-accent-500/12 py-4"><div class="fabric-texture"></div><div class="flex animate-marquee whitespace-nowrap relative z-10"><div class="flex items-center gap-8 mx-4"><span class="text-sm font-bold text-white">350+ Stores</span><span class="text-accent-500">◆</span><span class="text-sm font-bold text-white">12 Cities</span><span class="text-indigo-400">◆</span><span class="text-sm font-bold text-white">99% Stock Accuracy</span><span class="text-accent-500">◆</span><span class="text-sm font-bold text-white">3x Faster Billing</span><span class="text-indigo-400">◆</span><span class="text-sm font-bold text-white">Smart Reminders</span><span class="text-accent-500">◆</span><span class="text-sm font-bold text-white">Live Mobile Dashboard</span><span class="text-indigo-400">◆</span><span class="text-sm font-bold text-white">POS Printer + Scanner</span><span class="text-accent-500">◆</span></div><div class="flex items-center gap-8 mx-4"><span class="text-sm font-bold text-white">350+ Stores</span><span class="text-accent-500">◆</span><span class="text-sm font-bold text-white">12 Cities</span><span class="text-indigo-400">◆</span><span class="text-sm font-bold text-white">99% Stock Accuracy</span><span class="text-accent-500">◆</span><span class="text-sm font-bold text-white">3x Faster Billing</span><span class="text-indigo-400">◆</span><span class="text-sm font-bold text-white">Smart Reminders</span><span class="text-accent-500">◆</span><span class="text-sm font-bold text-white">Live Mobile Dashboard</span><span class="text-indigo-400">◆</span><span class="text-sm font-bold text-white">POS Printer + Scanner</span><span class="text-accent-500">◆</span></div></div></div>
-  </div>
-</section>
+<section id="results" class="relative py-16 md:py-24 bg-charcoal-900 overflow-hidden"><div class="fabric-texture"></div><div class="max-w-7xl mx-auto px-4 md:px-6 relative z-10">
+<div class="reveal flex items-center gap-3 mb-3"><div class="w-8 h-1 gradient-accent rounded-full"></div><span class="text-xs font-semibold uppercase tracking-widest text-accent-400">Proven Results</span></div>
+<h2 class="reveal reveal-delay-1 font-manrope text-2xl md:text-4xl font-bold text-white tracking-tight mb-3">Numbers From<br>Real Deployments.</h2>
+<p class="reveal reveal-delay-2 text-sm text-gray-500 max-w-lg mb-10">Measured outcomes from fabric stores that switched to Karigar.</p>
+<div class="grid md:grid-cols-2 gap-5 mb-10">
+<div class="reveal card-dark rounded-xl p-6 md:p-8"><span class="text-xs font-bold text-accent-300 bg-accent-500/10 px-3 py-1 rounded uppercase tracking-wider">Case Study 01</span><h3 class="font-manrope text-lg font-bold text-white mt-3 mb-2">Al-Karam's Eid Season</h3><p class="text-xs text-gray-500 mb-4">8 branches · Lahore · Eid Lawn 2024</p><div class="grid grid-cols-3 gap-3 mb-5"><div class="bg-charcoal-800 rounded-lg p-3 text-center"><p class="stat-number text-lg">72%</p><p class="text-xs text-gray-500 mt-1">Fewer mismatches</p></div><div class="bg-charcoal-800 rounded-lg p-3 text-center"><p class="stat-number text-lg">3.2x</p><p class="text-xs text-gray-500 mt-1">Faster billing</p></div><div class="bg-charcoal-800 rounded-lg p-3 text-center"><p class="stat-number text-lg">Rs 4L</p><p class="text-xs text-gray-500 mt-1">Saved dead stock</p></div></div><p class="text-xs text-gray-400 leading-relaxed"><span class="text-accent-300 font-semibold">Before:</span> 15+ daily stock calls. 40-min waits. 22% lawn unaccounted.<br><span class="text-indigo-300 font-semibold">After:</span> Live visibility. Billing in 2 min. Slow designs flagged by day 3.</p></div>
+<div class="reveal reveal-delay-1 card-dark rounded-xl p-6 md:p-8"><span class="text-xs font-bold text-accent-300 bg-accent-500/10 px-3 py-1 rounded uppercase tracking-wider">Case Study 02</span><h3 class="font-manrope text-lg font-bold text-white mt-3 mb-2">Bonanza's Branch Network</h3><p class="text-xs text-gray-500 mb-4">15 branches · 4 cities · Wholesale + Retail</p><div class="grid grid-cols-3 gap-3 mb-5"><div class="bg-charcoal-800 rounded-lg p-3 text-center"><p class="stat-number text-lg">100%</p><p class="text-xs text-gray-500 mt-1">Branch visibility</p></div><div class="bg-charcoal-800 rounded-lg p-3 text-center"><p class="stat-number text-lg">8min</p><p class="text-xs text-gray-500 mt-1">Owner review</p></div><div class="bg-charcoal-800 rounded-lg p-3 text-center"><p class="stat-number text-lg">Rs 12L</p><p class="text-xs text-gray-500 mt-1">Reconcil. saved</p></div></div><p class="text-xs text-gray-400 leading-relaxed"><span class="text-accent-300 font-semibold">Before:</span> Weekly travel for verification. 3-week annual reconciliation.<br><span class="text-indigo-300 font-semibold">After:</span> P&L from phone in 8 min. Year-end = 3 days. Branch transfers in-app.</p></div>
+</div>
+<div class="reveal relative rounded-xl overflow-hidden border border-accent-500/12 py-4"><div class="fabric-texture"></div><div class="flex animate-marquee whitespace-nowrap relative z-10"><div class="flex items-center gap-8 mx-4"><span class="text-sm font-bold text-white">350+ Stores</span><span class="text-accent-500">◆</span><span class="text-sm font-bold text-white">12 Cities</span><span class="text-indigo-400">◆</span><span class="text-sm font-bold text-white">99% Stock Accuracy</span><span class="text-accent-500">◆</span><span class="text-sm font-bold text-white">3x Faster Billing</span><span class="text-indigo-400">◆</span><span class="text-sm font-bold text-white">Smart Reminders</span><span class="text-accent-500">◆</span><span class="text-sm font-bold text-white">Live Dashboard</span><span class="text-indigo-400">◆</span><span class="text-sm font-bold text-white">POS Printer + Scanner</span><span class="text-accent-500">◆</span></div><div class="flex items-center gap-8 mx-4"><span class="text-sm font-bold text-white">350+ Stores</span><span class="text-accent-500">◆</span><span class="text-sm font-bold text-white">12 Cities</span><span class="text-indigo-400">◆</span><span class="text-sm font-bold text-white">99% Stock Accuracy</span><span class="text-accent-500">◆</span><span class="text-sm font-bold text-white">3x Faster Billing</span><span class="text-indigo-400">◆</span><span class="text-sm font-bold text-white">Smart Reminders</span><span class="text-accent-500">◆</span><span class="text-sm font-bold text-white">Live Dashboard</span><span class="text-indigo-400">◆</span><span class="text-sm font-bold text-white">POS Printer + Scanner</span><span class="text-accent-500">◆</span></div></div></div></div></section>
 
 <div class="section-divider mx-6"></div>
 
 <!-- REVIEWS -->
-<section id="reviews" class="relative py-16 md:py-24 bg-charcoal-950 overflow-hidden">
-  <div class="fabric-texture"></div>
-  <div class="max-w-7xl mx-auto px-4 md:px-6 relative z-10">
-    <div class="reveal flex items-center gap-3 mb-3"><div class="w-8 h-1 gradient-accent-soft rounded-full"></div><span class="text-xs font-semibold uppercase tracking-widest text-accent-300">Customer Reviews</span></div>
-    <h2 class="reveal reveal-delay-1 font-manrope text-2xl md:text-4xl font-bold text-white tracking-tight mb-3">What Fabric Store<br>Owners Are Saying.</h2>
-    <p class="reveal reveal-delay-2 text-sm text-gray-500 max-w-lg mb-10">Real feedback from Pakistani retailers.</p>
-
-    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-      <div class="reveal review-card"><div class="flex items-center gap-2 mb-3"><div class="w-8 h-8 rounded-full bg-accent-500/20 flex items-center justify-center"><span class="text-xs font-bold text-accent-400">AH</span></div><div><p class="text-sm font-bold text-white">Arif Hussain</p><p class="text-xs text-gray-500">Al-Karam · Lahore</p></div><div class="flex gap-0.5 ml-auto text-accent-300"><span class="iconify text-sm" data-icon="mdi:star"></span><span class="iconify text-sm" data-icon="mdi:star"></span><span class="iconify text-sm" data-icon="mdi:star"></span><span class="iconify text-sm" data-icon="mdi:star"></span><span class="iconify text-sm" data-icon="mdi:star"></span></div></div><p class="text-xs text-gray-400 leading-relaxed">"Eid season used to be chaos — 8 branches calling for stock checks. Now I see everything on my phone. Purchase reminders made sure we didn't run out."</p><div class="flex items-center gap-2 mt-3 text-xs text-gray-500"><span class="iconify" data-icon="mdi:calendar"></span><span>Eid 2024</span><span class="text-accent-500 ml-auto">Verified</span></div></div>
-      <div class="reveal reveal-delay-1 review-card"><div class="flex items-center gap-2 mb-3"><div class="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center"><span class="text-xs font-bold text-indigo-400">SF</span></div><div><p class="text-sm font-bold text-white">Saima Farooq</p><p class="text-xs text-gray-500">Gul Ahmed · Karachi</p></div><div class="flex gap-0.5 ml-auto text-accent-300"><span class="iconify text-sm" data-icon="mdi:star"></span><span class="iconify text-sm" data-icon="mdi:star"></span><span class="iconify text-sm" data-icon="mdi:star"></span><span class="iconify text-sm" data-icon="mdi:star"></span><span class="iconify text-sm" data-icon="mdi:star-half-full"></span></div></div><p class="text-xs text-gray-400 leading-relaxed">"Wholesale and retail on the same bill. Supplier payment reminders alone saved us from 3 missed deadlines."</p><div class="flex items-center gap-2 mt-3 text-xs text-gray-500"><span class="iconify" data-icon="mdi:calendar"></span><span>Since Mar 2024</span><span class="text-accent-500 ml-auto">Verified</span></div></div>
-      <div class="reveal reveal-delay-2 review-card"><div class="flex items-center gap-2 mb-3"><div class="w-8 h-8 rounded-full bg-accent-500/20 flex items-center justify-center"><span class="text-xs font-bold text-accent-400">MR</span></div><div><p class="text-sm font-bold text-white">Muhammad Rizwan</p><p class="text-xs text-gray-500">Rizwan Cloth · Faisalabad</p></div><div class="flex gap-0.5 ml-auto text-accent-300"><span class="iconify text-sm" data-icon="mdi:star"></span><span class="iconify text-sm" data-icon="mdi:star"></span><span class="iconify text-sm" data-icon="mdi:star"></span><span class="iconify text-sm" data-icon="mdi:star"></span><span class="iconify text-sm" data-icon="mdi:star"></span></div></div><p class="text-xs text-gray-400 leading-relaxed">"Thaan cut-tracking saved Rs 18,000 in lost pieces. Dead stock reminder freed Rs 35,000 in shelf space."</p><div class="flex items-center gap-2 mt-3 text-xs text-gray-500"><span class="iconify" data-icon="mdi:calendar"></span><span>Since Jan 2024</span><span class="text-accent-500 ml-auto">Verified</span></div></div>
-      <div class="reveal reveal-delay-3 review-card flex flex-col items-center justify-center text-center border-dashed border-gray-600/40 min-h-[160px]"><span class="iconify text-2xl text-gray-600 mb-2" data-icon="mdi:account-plus-outline"></span><p class="text-sm font-semibold text-gray-500">More Reviews Coming</p><button onclick="showToast('Review submission coming soon!')" class="text-xs font-medium text-accent-400 mt-3 underline underline-offset-2">Submit Review →</button></div>
-      <div class="reveal reveal-delay-4 review-card flex flex-col items-center justify-center text-center border-dashed border-gray-600/40 min-h-[160px]"><span class="iconify text-2xl text-gray-600 mb-2" data-icon="mdi:star-outline"></span><p class="text-sm font-semibold text-gray-500">Your Review Here</p><button onclick="showToast('Review submission coming soon!')" class="text-xs font-medium text-accent-400 mt-3 underline underline-offset-2">Submit Review →</button></div>
-      <div class="reveal reveal-delay-5 review-card flex flex-col items-center justify-center text-center border-dashed border-gray-600/40 min-h-[160px]"><span class="iconify text-2xl text-gray-600 mb-2" data-icon="mdi:comment-plus-outline"></span><p class="text-sm font-semibold text-gray-500">Join the Network</p><button onclick="showToast('Review submission coming soon!')" class="text-xs font-medium text-accent-400 mt-3 underline underline-offset-2">Submit Review →</button></div>
-    </div>
-
-    <div class="reveal flex flex-wrap items-center justify-between gap-4 p-4 rounded-xl bg-charcoal-800/40 border border-gray-700/20"><div class="flex items-center gap-6"><div class="flex items-center gap-1"><span class="stat-number text-2xl">4.8</span><span class="text-xs text-gray-500">/5</span></div><div class="flex gap-0.5 text-accent-300"><span class="iconify" data-icon="mdi:star"></span><span class="iconify" data-icon="mdi:star"></span><span class="iconify" data-icon="mdi:star"></span><span class="iconify" data-icon="mdi:star"></span><span class="iconify" data-icon="mdi:star-half-full"></span></div><span class="text-xs text-gray-500"><span class="text-white font-semibold">47</span> verified reviews</span></div><div class="flex items-center gap-2 text-xs text-gray-500"><span class="text-accent-300 font-medium">Lahore</span><span class="text-accent-300 font-medium">Karachi</span><span class="text-accent-300 font-medium">Faisalabad</span><span class="text-accent-300 font-medium">Multan</span></div></div>
-  </div>
-</section>
+<section id="reviews" class="relative py-16 md:py-24 bg-charcoal-950 overflow-hidden"><div class="fabric-texture"></div><div class="max-w-7xl mx-auto px-4 md:px-6 relative z-10">
+<div class="reveal flex items-center gap-3 mb-3"><div class="w-8 h-1 gradient-accent-soft rounded-full"></div><span class="text-xs font-semibold uppercase tracking-widest text-accent-300">Customer Reviews</span></div>
+<h2 class="reveal reveal-delay-1 font-manrope text-2xl md:text-4xl font-bold text-white tracking-tight mb-3">What Fabric Store<br>Owners Are Saying.</h2>
+<p class="reveal reveal-delay-2 text-sm text-gray-500 max-w-lg mb-10">Real feedback from Pakistani retailers.</p>
+<div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+<div class="reveal review-card"><div class="flex items-center gap-2 mb-3"><div class="w-8 h-8 rounded-full bg-accent-500/20 flex items-center justify-center"><span class="text-xs font-bold text-accent-400">AH</span></div><div><p class="text-sm font-bold text-white">Arif Hussain</p><p class="text-xs text-gray-500">Al-Karam · Lahore</p></div><div class="flex gap-0.5 ml-auto text-accent-300"><span class="iconify text-sm" data-icon="mdi:star"></span><span class="iconify text-sm" data-icon="mdi:star"></span><span class="iconify text-sm" data-icon="mdi:star"></span><span class="iconify text-sm" data-icon="mdi:star"></span><span class="iconify text-sm" data-icon="mdi:star"></span></div></div><p class="text-xs text-gray-400 leading-relaxed">"8 branches calling for stock checks — chaos. Now I see everything on my phone. Purchase reminders kept top-selling lawn stocked."</p><div class="flex items-center gap-2 mt-3 text-xs text-gray-500"><span class="iconify" data-icon="mdi:calendar"></span><span>Eid 2024</span><span class="text-accent-500 ml-auto">Verified</span></div></div>
+<div class="reveal reveal-delay-1 review-card"><div class="flex items-center gap-2 mb-3"><div class="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center"><span class="text-xs font-bold text-indigo-400">SF</span></div><div><p class="text-sm font-bold text-white">Saima Farooq</p><p class="text-xs text-gray-500">Gul Ahmed · Karachi</p></div><div class="flex gap-0.5 ml-auto text-accent-300"><span class="iconify text-sm" data-icon="mdi:star"></span><span class="iconify text-sm" data-icon="mdi:star"></span><span class="iconify text-sm" data-icon="mdi:star"></span><span class="iconify text-sm" data-icon="mdi:star"></span><span class="iconify text-sm" data-icon="mdi:star-half-full"></span></div></div><p class="text-xs text-gray-400 leading-relaxed">"Wholesale+retail on same bill — solved. Supplier reminders saved 3 missed payment deadlines."</p><div class="flex items-center gap-2 mt-3 text-xs text-gray-500"><span class="iconify" data-icon="mdi:calendar"></span><span>Mar 2024</span><span class="text-accent-500 ml-auto">Verified</span></div></div>
+<div class="reveal reveal-delay-2 review-card"><div class="flex items-center gap-2 mb-3"><div class="w-8 h-8 rounded-full bg-accent-500/20 flex items-center justify-center"><span class="text-xs font-bold text-accent-400">MR</span></div><div><p class="text-sm font-bold text-white">Muhammad Rizwan</p><p class="text-xs text-gray-500">Rizwan Cloth · Faisalabad</p></div><div class="flex gap-0.5 ml-auto text-accent-300"><span class="iconify text-sm" data-icon="mdi:star"></span><span class="iconify text-sm" data-icon="mdi:star"></span><span class="iconify text-sm" data-icon="mdi:star"></span><span class="iconify text-sm" data-icon="mdi:star"></span><span class="iconify text-sm" data-icon="mdi:star"></span></div></div><p class="text-xs text-gray-400 leading-relaxed">"Thaan cut-tracking saved Rs 18,000 in lost pieces. Dead stock reminder freed Rs 35,000 shelf space."</p><div class="flex items-center gap-2 mt-3 text-xs text-gray-500"><span class="iconify" data-icon="mdi:calendar"></span><span>Jan 2024</span><span class="text-accent-500 ml-auto">Verified</span></div></div>
+<div class="reveal reveal-delay-3 review-card flex flex-col items-center justify-center text-center border-dashed border-gray-600/40 min-h-[160px]"><span class="iconify text-2xl text-gray-600 mb-2" data-icon="mdi:account-plus-outline"></span><p class="text-sm font-semibold text-gray-500">More Reviews Coming</p><button onclick="showToast('Review submission coming soon!')" class="text-xs font-medium text-accent-400 mt-3 underline underline-offset-2">Submit Review →</button></div>
+<div class="reveal reveal-delay-4 review-card flex flex-col items-center justify-center text-center border-dashed border-gray-600/40 min-h-[160px]"><span class="iconify text-2xl text-gray-600 mb-2" data-icon="mdi:star-outline"></span><p class="text-sm font-semibold text-gray-500">Your Review Here</p><button onclick="showToast('Review submission coming soon!')" class="text-xs font-medium text-accent-400 mt-3 underline underline-offset-2">Submit Review →</button></div>
+<div class="reveal reveal-delay-5 review-card flex flex-col items-center justify-center text-center border-dashed border-gray-600/40 min-h-[160px]"><span class="iconify text-2xl text-gray-600 mb-2" data-icon="mdi:comment-plus-outline"></span><p class="text-sm font-semibold text-gray-500">Join the Network</p><button onclick="showToast('Review submission coming soon!')" class="text-xs font-medium text-accent-400 mt-3 underline underline-offset-2">Submit Review →</button></div>
+</div>
+<div class="reveal flex flex-wrap items-center justify-between gap-4 p-4 rounded-xl bg-charcoal-800/40 border border-gray-700/20"><div class="flex items-center gap-6"><div class="flex items-center gap-1"><span class="stat-number text-2xl">4.8</span><span class="text-xs text-gray-500">/5</span></div><div class="flex gap-0.5 text-accent-300"><span class="iconify" data-icon="mdi:star"></span><span class="iconify" data-icon="mdi:star"></span><span class="iconify" data-icon="mdi:star"></span><span class="iconify" data-icon="mdi:star"></span><span class="iconify" data-icon="mdi:star-half-full"></span></div><span class="text-xs text-gray-500"><span class="text-white font-semibold">47</span> verified</span></div><div class="flex items-center gap-2 text-xs"><span class="text-accent-300 font-medium">Lahore</span><span class="text-accent-300 font-medium">Karachi</span><span class="text-accent-300 font-medium">Faisalabad</span><span class="text-accent-300 font-medium">Multan</span></div></div></div></section>
 
 <div class="section-divider mx-6"></div>
 
 <!-- BOOK A DEMO -->
-<section id="demo" class="relative py-16 md:py-24 overflow-hidden">
-  <div class="absolute inset-0 gradient-accent opacity-10"></div><div class="fabric-texture"></div>
-  <div class="max-w-7xl mx-auto px-4 md:px-6 relative z-10">
-    <div class="flex flex-col lg:flex-row gap-8 lg:gap-12">
-      <div class="lg:w-1/2">
-        <div class="reveal flex items-center gap-3 mb-3"><div class="w-8 h-1 gradient-accent rounded-full"></div><span class="text-xs font-semibold uppercase tracking-widest text-accent-400">Get Started</span></div>
-        <h2 class="reveal reveal-delay-1 font-manrope text-2xl md:text-4xl font-bold text-white tracking-tight mb-4">See It Running<br>On Your Counter.</h2>
-        <p class="reveal reveal-delay-2 text-sm text-gray-400 leading-relaxed mb-6">We set up Karigar on one branch — your actual inventory, your supplier names, your thaan data. No commitments until you're convinced.</p>
-        <div class="reveal reveal-delay-3 space-y-3 mb-8">
-          <div class="flex items-center gap-3"><span class="iconify text-accent-400" data-icon="mdi:shield-check"></span><span class="text-sm text-gray-300">Free setup on your first branch</span></div>
-          <div class="flex items-center gap-3"><span class="iconify text-accent-400" data-icon="mdi:clock-outline"></span><span class="text-sm text-gray-300">30-min demo — in-store or WhatsApp video</span></div>
-          <div class="flex items-center gap-3"><span class="iconify text-accent-400" data-icon="mdi:cellphone-check"></span><span class="text-sm text-gray-300">Mobile dashboard & reminders from day 1</span></div>
-          <div class="flex items-center gap-3"><span class="iconify text-accent-400" data-icon="mdi:translate"></span><span class="text-sm text-gray-300">Urdu + English interface</span></div>
-          <div class="flex items-center gap-3"><span class="iconify text-accent-400" data-icon="mdi:printer"></span><span class="text-sm text-gray-300">POS printer & barcode scanner — works with your hardware</span></div>
-        </div>
-        <div class="reveal reveal-delay-4 flex flex-wrap gap-3">
-          <a href="https://wa.me/923234548826?text=Hi%20Karigar%20team%2C%20I%20want%20to%20book%20a%20demo%20for%20my%20fabric%20store." target="_blank" class="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-green-600 hover:bg-green-500 text-white text-sm font-semibold transition-all"><span class="iconify text-lg" data-icon="mdi:whatsapp"></span>WhatsApp: 0323-4548826</a>
-          <a href="tel:+923234548826" class="inline-flex items-center gap-2 px-6 py-3 rounded-lg border border-accent-400/30 text-accent-400 hover:bg-accent-400/10 text-sm font-semibold transition-all"><span class="iconify" data-icon="mdi:phone"></span>Call Now</a>
-        </div>
-      </div>
-      <div class="lg:w-1/2">
-        <div class="reveal card-dark rounded-2xl p-6 md:p-8">
-          <h3 class="font-manrope text-lg font-bold text-white mb-1">Book Your Free Demo</h3>
-          <p class="text-xs text-gray-500 mb-6">We'll contact you within 2 hours.</p>
-          <form id="demo-form" class="space-y-4" onsubmit="handleDemoForm(event)">
-            <div><label class="text-xs font-medium text-gray-400 mb-1 block">Store Name *</label><input type="text" required placeholder="e.g. Al-Karam Fabrics" class="w-full px-4 py-2.5 rounded-lg bg-charcoal-800 border border-gray-700 text-white text-sm placeholder-gray-600 focus:border-accent-500 focus:outline-none transition-colors"></div>
-            <div><label class="text-xs font-medium text-gray-400 mb-1 block">Owner / Manager *</label><input type="text" required placeholder="Your full name" class="w-full px-4 py-2.5 rounded-lg bg-charcoal-800 border border-gray-700 text-white text-sm placeholder-gray-600 focus:border-accent-500 focus:outline-none transition-colors"></div>
-            <div class="grid grid-cols-2 gap-3"><div><label class="text-xs font-medium text-gray-400 mb-1 block">Phone / WhatsApp *</label><input type="tel" required placeholder="03XX-XXXXXXX" class="w-full px-4 py-2.5 rounded-lg bg-charcoal-800 border border-gray-700 text-white text-sm placeholder-gray-600 focus:border-accent-500 focus:outline-none transition-colors"></div><div><label class="text-xs font-medium text-gray-400 mb-1 block">City *</label><select required class="w-full px-4 py-2.5 rounded-lg bg-charcoal-800 border border-gray-700 text-white text-sm focus:border-accent-500 focus:outline-none"><option value="">Select</option><option>Lahore</option><option>Karachi</option><option>Islamabad</option><option>Faisalabad</option><option>Multan</option><option>Peshawar</option><option>Other</option></select></div></div>
-            <div class="grid grid-cols-2 gap-3"><div><label class="text-xs font-medium text-gray-400 mb-1 block">Branches</label><select class="w-full px-4 py-2.5 rounded-lg bg-charcoal-800 border border-gray-700 text-white text-sm focus:border-accent-500 focus:outline-none"><option>1</option><option>2-5</option><option>6-10</option><option>15+</option></select></div><div><label class="text-xs font-medium text-gray-400 mb-1 block">Business Type</label><select class="w-full px-4 py-2.5 rounded-lg bg-charcoal-800 border border-gray-700 text-white text-sm focus:border-accent-500 focus:outline-none"><option>Unstitched Lawn</option><option>Bridal/Chiffon</option><option>Wholesale Thaan</option><option>Mixed</option></select></div></div>
-            <button type="submit" class="btn-accent w-full text-sm font-semibold uppercase tracking-wider px-8 py-3 rounded-lg flex items-center justify-center gap-2"><span class="iconify" data-icon="mdi:calendar-check"></span>Request Demo — We'll Call You</button>
-            <p class="text-xs text-gray-600 text-center">Or message us on WhatsApp for instant response</p>
-          </form>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
+<section id="demo" class="relative py-16 md:py-24 overflow-hidden"><div class="absolute inset-0 gradient-accent opacity-10"></div><div class="fabric-texture"></div><div class="max-w-7xl mx-auto px-4 md:px-6 relative z-10">
+<div class="flex flex-col lg:flex-row gap-8 lg:gap-12">
+<div class="lg:w-1/2">
+<div class="reveal flex items-center gap-3 mb-3"><div class="w-8 h-1 gradient-accent rounded-full"></div><span class="text-xs font-semibold uppercase tracking-widest text-accent-400">Get Started</span></div>
+<h2 class="reveal reveal-delay-1 font-manrope text-2xl md:text-4xl font-bold text-white tracking-tight mb-4">See It Running<br>On Your Counter.</h2>
+<p class="reveal reveal-delay-2 text-sm text-gray-400 leading-relaxed mb-6">We set up Karigar on one branch — your data, your suppliers. No commitments until you're convinced.</p>
+<div class="reveal reveal-delay-3 space-y-3 mb-8"><div class="flex items-center gap-3"><span class="iconify text-accent-400" data-icon="mdi:shield-check"></span><span class="text-sm text-gray-300">Free setup on your first branch</span></div><div class="flex items-center gap-3"><span class="iconify text-accent-400" data-icon="mdi:clock-outline"></span><span class="text-sm text-gray-300">30-min demo — in-store or WhatsApp</span></div><div class="flex items-center gap-3"><span class="iconify text-accent-400" data-icon="mdi:cellphone-check"></span><span class="text-sm text-gray-300">Mobile dashboard & reminders from day 1</span></div><div class="flex items-center gap-3"><span class="iconify text-accent-400" data-icon="mdi:printer"></span><span class="text-sm text-gray-300">POS printer & barcode scanner support</span></div></div>
+<div class="reveal reveal-delay-4 flex flex-wrap gap-3"><a href="https://wa.me/923234548826?text=Hi%20Karigar%20team%2C%20I%20want%20to%20book%20a%20demo." target="_blank" class="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-green-600 hover:bg-green-500 text-white text-sm font-semibold transition-all"><span class="iconify text-lg" data-icon="mdi:whatsapp"></span>WhatsApp: 0323-4548826</a><a href="tel:+923234548826" class="inline-flex items-center gap-2 px-6 py-3 rounded-lg border border-accent-400/30 text-accent-400 hover:bg-accent-400/10 text-sm font-semibold transition-all"><span class="iconify" data-icon="mdi:phone"></span>Call Now</a></div></div>
+<div class="lg:w-1/2"><div class="reveal card-dark rounded-2xl p-6 md:p-8"><h3 class="font-manrope text-lg font-bold text-white mb-1">Book Your Free Demo</h3><p class="text-xs text-gray-500 mb-6">We'll contact you within 2 hours.</p><form id="demo-form" class="space-y-4" onsubmit="handleDemoForm(event)"><div><label class="text-xs font-medium text-gray-400 mb-1 block">Store Name *</label><input type="text" required placeholder="e.g. Al-Karam Fabrics" class="w-full px-4 py-2.5 rounded-lg bg-charcoal-800 border border-gray-700 text-white text-sm placeholder-gray-600 focus:border-accent-500 focus:outline-none transition-colors"></div><div><label class="text-xs font-medium text-gray-400 mb-1 block">Owner *</label><input type="text" required placeholder="Your name" class="w-full px-4 py-2.5 rounded-lg bg-charcoal-800 border border-gray-700 text-white text-sm placeholder-gray-600 focus:border-accent-500 focus:outline-none transition-colors"></div><div class="grid grid-cols-2 gap-3"><div><label class="text-xs font-medium text-gray-400 mb-1 block">Phone *</label><input type="tel" required placeholder="03XX-XXXXXXX" class="w-full px-4 py-2.5 rounded-lg bg-charcoal-800 border border-gray-700 text-white text-sm placeholder-gray-600 focus:border-accent-500 focus:outline-none transition-colors"></div><div><label class="text-xs font-medium text-gray-400 mb-1 block">City *</label><select required class="w-full px-4 py-2.5 rounded-lg bg-charcoal-800 border border-gray-700 text-white text-sm focus:border-accent-500 focus:outline-none"><option value="">Select</option><option>Lahore</option><option>Karachi</option><option>Islamabad</option><option>Faisalabad</option><option>Multan</option><option>Other</option></select></div></div><div class="grid grid-cols-2 gap-3"><div><label class="text-xs font-medium text-gray-400 mb-1 block">Branches</label><select class="w-full px-4 py-2.5 rounded-lg bg-charcoal-800 border border-gray-700 text-white text-sm focus:border-accent-500 focus:outline-none"><option>1</option><option>2-5</option><option>6-10</option><option>15+</option></select></div><div><label class="text-xs font-medium text-gray-400 mb-1 block">Type</label><select class="w-full px-4 py-2.5 rounded-lg bg-charcoal-800 border border-gray-700 text-white text-sm focus:border-accent-500 focus:outline-none"><option>Unstitched</option><option>Bridal</option><option>Wholesale</option><option>Mixed</option></select></div></div><button type="submit" class="btn-accent w-full text-sm font-semibold uppercase tracking-wider px-8 py-3 rounded-lg flex items-center justify-center gap-2"><span class="iconify" data-icon="mdi:calendar-check"></span>Request Demo</button><p class="text-xs text-gray-600 text-center">Or WhatsApp us for instant response</p></form></div></div>
+</div></div></section>
 
 <!-- FOOTER -->
-<footer class="relative bg-charcoal-950 border-t border-gray-800/40 overflow-hidden">
-  <div class="fabric-texture"></div>
-  <div class="max-w-7xl mx-auto px-4 md:px-6 py-12 relative z-10">
-    <div class="grid md:grid-cols-4 gap-8 mb-10">
-      <div><div class="flex items-center gap-2 mb-4"><div class="w-8 h-8 gradient-accent rounded-lg flex items-center justify-center"><span class="iconify text-white text-lg" data-icon="mdi:store"></span></div><span class="font-manrope text-lg font-bold text-white">Karigar<span class="text-xs font-medium text-accent-400 ml-1">POS</span></span></div><p class="text-xs text-gray-500 leading-relaxed mb-4">POS for Pakistani fabric retailers. Multi-branch, wholesale+retail, seasonal tracking, supplier ledger, purchase reminders, mobile dashboard, POS printer & scanner.</p><div class="flex items-center gap-3"><a href="#" class="w-8 h-8 rounded-lg bg-charcoal-800 flex items-center justify-center text-gray-500 hover:text-accent-400 transition-all"><span class="iconify" data-icon="mdi:facebook"></span></a><a href="#" class="w-8 h-8 rounded-lg bg-charcoal-800 flex items-center justify-center text-gray-500 hover:text-accent-400 transition-all"><span class="iconify" data-icon="mdi:instagram"></span></a><a href="https://wa.me/923234548826" target="_blank" class="w-8 h-8 rounded-lg bg-charcoal-800 flex items-center justify-center text-green-500 hover:text-green-400 transition-all"><span class="iconify" data-icon="mdi:whatsapp"></span></a></div></div>
-      <div><h4 class="text-xs font-semibold uppercase tracking-widest text-accent-400 mb-4">Product</h4><ul class="space-y-2"><li><a href="#features" class="text-xs text-gray-500 hover:text-gray-300">Multi-Branch Sync</a></li><li><a href="#features" class="text-xs text-gray-500 hover:text-gray-300">Wholesale + Retail</a></li><li><a href="#features" class="text-xs text-gray-500 hover:text-gray-300">Seasonal Tracking</a></li><li><a href="#mobile" class="text-xs text-gray-500 hover:text-gray-300">Mobile Dashboard</a></li><li><a href="#reminders" class="text-xs text-gray-500 hover:text-gray-300">Purchase Reminders</a></li></ul></div>
-      <div><h4 class="text-xs font-semibold uppercase tracking-widest text-accent-400 mb-4">Resources</h4><ul class="space-y-2"><li><a href="#screens" class="text-xs text-gray-500 hover:text-gray-300">Product Screens</a></li><li><a href="#results" class="text-xs text-gray-500 hover:text-gray-300">Case Studies</a></li><li><a href="#reviews" class="text-xs text-gray-500 hover:text-gray-300">Reviews</a></li><li><a href="#" class="text-xs text-gray-500 hover:text-gray-300">Setup Guide</a></li><li><a href="#" class="text-xs text-gray-500 hover:text-gray-300">Pricing</a></li></ul></div>
-      <div><h4 class="text-xs font-semibold uppercase tracking-widest text-accent-400 mb-4">Contact</h4><ul class="space-y-3"><li class="flex items-center gap-2"><span class="iconify text-green-500" data-icon="mdi:whatsapp"></span><a href="https://wa.me/923234548826" class="text-xs text-gray-400 hover:text-green-400">0323-4548826</a></li><li class="flex items-center gap-2"><span class="iconify text-accent-400" data-icon="mdi:phone"></span><a href="tel:+923234548826" class="text-xs text-gray-400 hover:text-accent-400">0323-4548826</a></li><li class="flex items-center gap-2"><span class="iconify text-indigo-400" data-icon="mdi:email-outline"></span><a href="mailto:hello@karigarpos.com" class="text-xs text-gray-400 hover:text-indigo-400">hello@karigarpos.com</a></li></ul><div class="mt-4 p-3 rounded-lg bg-charcoal-800/40 border border-gray-700/20"><p class="text-xs text-gray-500">Mon–Sat: 10 AM – 8 PM</p><p class="text-xs text-gray-400 font-medium">WhatsApp 24/7</p></div></div>
-    </div>
-    <div class="border-t border-gray-800/20 pt-6 flex flex-wrap items-center justify-between gap-4"><span class="text-xs text-gray-600">© 2024 Karigar POS. Built in Pakistan. کاریگر</span><div class="flex items-center gap-4"><a href="#" class="text-xs text-gray-600 hover:text-gray-400">Privacy</a><a href="#" class="text-xs text-gray-600 hover:text-gray-400">Terms</a></div></div>
-  </div>
-</footer>
+<footer class="relative bg-charcoal-950 border-t border-gray-800/40 overflow-hidden"><div class="fabric-texture"></div><div class="max-w-7xl mx-auto px-4 md:px-6 py-12 relative z-10">
+<div class="grid md:grid-cols-4 gap-8 mb-10">
+<div><div class="flex items-center gap-2 mb-4"><div class="w-8 h-8 gradient-accent rounded-lg flex items-center justify-center"><span class="iconify text-white text-lg" data-icon="mdi:store"></span></div><span class="font-manrope text-lg font-bold text-white">Karigar<span class="text-xs font-medium text-accent-400 ml-1">POS</span></span></div><p class="text-xs text-gray-500 leading-relaxed">POS for Pakistani fabric retailers. Multi-branch, wholesale+retail, seasonal tracking, supplier ledger, reminders, mobile, POS printer & scanner.</p><div class="flex items-center gap-3 mt-4"><a href="#" class="w-8 h-8 rounded-lg bg-charcoal-800 flex items-center justify-center text-gray-500 hover:text-accent-400 transition-all"><span class="iconify" data-icon="mdi:facebook"></span></a><a href="#" class="w-8 h-8 rounded-lg bg-charcoal-800 flex items-center justify-center text-gray-500 hover:text-accent-400 transition-all"><span class="iconify" data-icon="mdi:instagram"></span></a><a href="https://wa.me/923234548826" target="_blank" class="w-8 h-8 rounded-lg bg-charcoal-800 flex items-center justify-center text-green-500 hover:text-green-400 transition-all"><span class="iconify" data-icon="mdi:whatsapp"></span></a></div></div>
+<div><h4 class="text-xs font-semibold uppercase tracking-widest text-accent-400 mb-4">Product</h4><ul class="space-y-2"><li><a href="#features" class="text-xs text-gray-500 hover:text-gray-300">Multi-Branch Sync</a></li><li><a href="#features" class="text-xs text-gray-500 hover:text-gray-300">Wholesale + Retail</a></li><li><a href="#features" class="text-xs text-gray-500 hover:text-gray-300">Seasonal Tracking</a></li><li><a href="#mobile" class="text-xs text-gray-500 hover:text-gray-300">Mobile Dashboard</a></li><li><a href="#reminders" class="text-xs text-gray-500 hover:text-gray-300">Purchase Reminders</a></li></ul></div>
+<div><h4 class="text-xs font-semibold uppercase tracking-widest text-accent-400 mb-4">Resources</h4><ul class="space-y-2"><li><a href="#screens" class="text-xs text-gray-500 hover:text-gray-300">Product Screens</a></li><li><a href="#results" class="text-xs text-gray-500 hover:text-gray-300">Case Studies</a></li><li><a href="#reviews" class="text-xs text-gray-500 hover:text-gray-300">Reviews</a></li><li><a href="#" class="text-xs text-gray-500 hover:text-gray-300">Setup Guide</a></li></ul></div>
+<div><h4 class="text-xs font-semibold uppercase tracking-widest text-accent-400 mb-4">Contact</h4><ul class="space-y-3"><li class="flex items-center gap-2"><span class="iconify text-green-500" data-icon="mdi:whatsapp"></span><a href="https://wa.me/923234548826" class="text-xs text-gray-400 hover:text-green-400">0323-4548826</a></li><li class="flex items-center gap-2"><span class="iconify text-accent-400" data-icon="mdi:phone"></span><a href="tel:+923234548826" class="text-xs text-gray-400 hover:text-accent-400">0323-4548826</a></li><li class="flex items-center gap-2"><span class="iconify text-indigo-400" data-icon="mdi:email-outline"></span><a href="mailto:hello@karigarpos.com" class="text-xs text-gray-400 hover:text-indigo-400">hello@karigarpos.com</a></li></ul><div class="mt-4 p-3 rounded-lg bg-charcoal-800/40 border border-gray-700/20"><p class="text-xs text-gray-500">Mon–Sat: 10 AM – 8 PM</p><p class="text-xs text-gray-400 font-medium">WhatsApp 24/7</p></div></div>
+</div>
+<div class="border-t border-gray-800/20 pt-6 flex flex-wrap items-center justify-between gap-4"><span class="text-xs text-gray-600">© 2024 Karigar POS. کاریگر</span><div class="flex items-center gap-4"><a href="#" class="text-xs text-gray-600 hover:text-gray-400">Privacy</a><a href="#" class="text-xs text-gray-600 hover:text-gray-400">Terms</a></div></div>
+</div></footer>
 
-<!-- SCRIPTS -->
 <script>
-  const screenshots = [
+const screenshots = [
     { src:'image (1).png', caption:'Billing — Fast counter billing with cart & categories' },
     { src:'image (2).png', caption:'Inventory — Thaan, suit & accessory tracking' },
     { src:'image (3).png', caption:'History — Sales records with receipts & returns' },
     { src:'image (4).png', caption:'Dashboard — Sales analytics with hourly trends & cash vs digital' },
     { src:'image (5).png', caption:'Settings — Shop profile, QR code & receipt customization' }
   ];
-  let currentLB=0;
-  function openLightbox(i){currentLB=i;document.getElementById('lb-img').src=screenshots[i].src;document.getElementById('lb-caption').textContent=screenshots[i].caption;document.getElementById('lightbox').classList.add('open');document.body.style.overflow='hidden';}
-  function closeLightbox(){document.getElementById('lightbox').classList.remove('open');document.body.style.overflow='';}
-  function navigateLightbox(dir){currentLB=(currentLB+dir+screenshots.length)%screenshots.length;document.getElementById('lb-img').src=screenshots[currentLB].src;document.getElementById('lb-caption').textContent=screenshots[currentLB].caption;}
-  document.addEventListener('keydown',e=>{if(document.getElementById('lightbox').classList.contains('open')){if(e.key==='Escape')closeLightbox();if(e.key==='ArrowLeft'){navigateLightbox(-1);event.stopPropagation();}if(e.key==='ArrowRight'){navigateLightbox(1);event.stopPropagation();}}});
-
-  function initReveal(){const observer=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('active');});},{threshold:0.1,rootMargin:'0px 0px -40px 0px'});document.querySelectorAll('.reveal').forEach(el=>observer.observe(el));}
-  const mobMenu=document.getElementById('mob-menu');
-  document.getElementById('mob-toggle').addEventListener('click',()=>{mobMenu.classList.remove('opacity-0','pointer-events-none');mobMenu.classList.add('opacity-100','pointer-events-auto');});
-  document.getElementById('mob-close').addEventListener('click',()=>{mobMenu.classList.add('opacity-0','pointer-events-none');mobMenu.classList.remove('opacity-100','pointer-events-auto');});
-  document.querySelectorAll('.mob-link').forEach(l=>l.addEventListener('click',()=>{mobMenu.classList.add('opacity-0','pointer-events-none');mobMenu.classList.remove('opacity-100','pointer-events-auto');}));
-  function showToast(msg){document.getElementById('toast-msg').textContent=msg;document.getElementById('toast').classList.add('show');setTimeout(()=>document.getElementById('toast').classList.remove('show'),3000);}
-  function handleDemoForm(e){e.preventDefault();showToast('Demo request submitted! We\'ll call you within 2 hours.');e.target.reset();}
-  document.addEventListener('DOMContentLoaded',initReveal);initReveal();
+let currentLB=0;
+function openLightbox(i){currentLB=i;document.getElementById('lb-img').src=screenshots[i].src;document.getElementById('lb-caption').textContent=screenshots[i].caption;document.getElementById('lightbox').classList.add('open');document.body.style.overflow='hidden'}
+function closeLightbox(){document.getElementById('lightbox').classList.remove('open');document.body.style.overflow=''}
+function navigateLightbox(dir){currentLB=(currentLB+dir+screenshots.length)%screenshots.length;document.getElementById('lb-img').src=screenshots[currentLB].src;document.getElementById('lb-caption').textContent=screenshots[currentLB].caption}
+document.addEventListener('keydown',e=>{if(document.getElementById('lightbox').classList.contains('open')){if(e.key==='Escape')closeLightbox();if(e.key==='ArrowLeft'){navigateLightbox(-1);event.stopPropagation()}if(e.key==='ArrowRight'){navigateLightbox(1);event.stopPropagation()}}});
+function initReveal(){const observer=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('active')})},{threshold:.1,rootMargin:'0px 0px -40px 0px'});document.querySelectorAll('.reveal').forEach(el=>observer.observe(el))}
+const mobMenu=document.getElementById('mob-menu');
+document.getElementById('mob-toggle').addEventListener('click',()=>{mobMenu.classList.remove('opacity-0','pointer-events-none');mobMenu.classList.add('opacity-100','pointer-events-auto')});
+document.getElementById('mob-close').addEventListener('click',()=>{mobMenu.classList.add('opacity-0','pointer-events-none');mobMenu.classList.remove('opacity-100','pointer-events-auto')});
+document.querySelectorAll('.mob-link').forEach(l=>l.addEventListener('click',()=>{mobMenu.classList.add('opacity-0','pointer-events-none');mobMenu.classList.remove('opacity-100','pointer-events-auto')}));
+function showToast(msg){document.getElementById('toast-msg').textContent=msg;document.getElementById('toast').classList.add('show');setTimeout(()=>document.getElementById('toast').classList.remove('show'),3000)}
+function handleDemoForm(e){e.preventDefault();showToast('Demo request submitted! We\'ll call you within 2 hours.');e.target.reset()}
+document.addEventListener('DOMContentLoaded',initReveal);initReveal();
 </script>
 </body>
 </html>
