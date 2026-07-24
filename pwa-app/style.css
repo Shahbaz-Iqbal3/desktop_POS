@@ -73,6 +73,7 @@
 
 html {
   background-color: var(--bg);
+  overscroll-behavior-y: none;
 }
 
 html, body {
@@ -80,6 +81,7 @@ html, body {
   padding: 0;
   height: 100%;
   background: var(--bg);
+  overscroll-behavior-y: none;
 }
 
 body {

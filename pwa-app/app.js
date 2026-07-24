@@ -129,7 +129,7 @@ function urlBase64ToUint8Array(base64String) {
 async function sendSubscriptionToBackend(subscription) {
   try {
     const { data: { session } } = await supabase.auth.getSession();
-    await fetch(PUSH_SUBSCRIBE_URL, {
+    const resp = await fetch(PUSH_SUBSCRIBE_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -137,8 +137,28 @@ async function sendSubscriptionToBackend(subscription) {
       },
       body: JSON.stringify({ shopId, subscription: subscription.toJSON() })
     });
+    const text = await resp.text();
+    console.log('[push] subscribe response', resp.status, text);
+    if (!resp.ok) {
+      console.warn('[push] subscribe failed:', text);
+    }
   } catch (err) {
     console.error('Failed to send push subscription:', err);
+  }
+}
+
+async function checkPushSubscription() {
+  try {
+    if (!shopId) return { registered: false, reason: 'no shop id' };
+    const { data, error } = await supabase
+      .from('push_subscriptions')
+      .select('id, created_at')
+      .eq('shop_id', shopId)
+      .maybeSingle();
+    if (error) return { registered: false, error: error.message };
+    return { registered: !!data, subscription: data || null };
+  } catch (err) {
+    return { registered: false, error: String(err) };
   }
 }
 let shopId = null;
@@ -255,10 +275,17 @@ function init() {
     });
   }
 
-  window.addEventListener('beforeunload', (e) => {
-    e.preventDefault();
-    e.returnValue = '';
-  });
+  let touchAtTop = false;
+  document.addEventListener('touchstart', (e) => {
+    if (window.scrollY === 0) touchAtTop = true;
+  }, { passive: true });
+  document.addEventListener('touchmove', (e) => {
+    if (touchAtTop && window.scrollY === 0) {
+      e.preventDefault();
+    }
+    touchAtTop = false;
+  }, { passive: false });
+
   logoutBtn.addEventListener('click', logout);
 
   // Modal close
@@ -285,6 +312,13 @@ function init() {
         return initializeApp();
       })
       .then(() => initPushNotifications())
+      .then(async () => {
+        const status = await checkPushSubscription();
+        console.log('[push] registration status', status);
+        if (!status.registered) {
+          console.warn('[push] device NOT registered for push notifications', status);
+        }
+      })
       .catch(() => {
         hideLoading();
         sessionStorage.removeItem('shopId');
@@ -416,6 +450,11 @@ async function handleManualPair(code) {
     sessionStorage.setItem('shopId', shopId);
     initializeApp();
     initPushNotifications();
+    const status = await checkPushSubscription();
+    console.log('[push] registration status', status);
+    if (!status.registered) {
+      console.warn('[push] device NOT registered for push notifications', status);
+    }
   } catch (err) {
     hideLoading();
     console.error('Pairing lookup failed:', err);
