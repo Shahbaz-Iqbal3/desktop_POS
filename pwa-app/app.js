@@ -247,6 +247,7 @@ function init() {
   el('purchase-search').addEventListener('input', (e) => renderPurchaseList(e.target.value));
   el('add-purchase-btn').addEventListener('click', openAddPurchaseModal);
   notifBtn.addEventListener('click', openNotifModal);
+  logoutBtn.addEventListener('click', logout);
 
   // Modal close
   el('modal-root').addEventListener('click', (e) => {
@@ -262,6 +263,7 @@ function init() {
 
   const storedShopId = sessionStorage.getItem('shopId');
   if (storedShopId) {
+    showLoading();
     shopId = storedShopId;
     ensureSupabaseLoaded()
       .then(() => {
@@ -272,9 +274,12 @@ function init() {
       })
       .then(() => initPushNotifications())
       .catch(() => {
-        logout();
+        hideLoading();
+        sessionStorage.removeItem('shopId');
+        showLoginScreen();
       });
   } else {
+    hideLoading();
     loginScreen.hidden = false;
     appEl.hidden = true;
   }
@@ -428,20 +433,27 @@ function connect(id, code) {
 
 async function initializeApp() {
   try {
-    const { data: shop, error } = await supabase.from('shops').select('name, currency').eq('id', shopId).single();
-    if (error) {
-      const status = error.status || error.code;
-      if (status === 401 || String(error.message || '').includes('JWT')) {
-        showToast('Session expired. Please scan the QR code again.');
-        logout();
-        return;
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        const { data: shop, error } = await supabase.from('shops').select('name, currency').eq('id', shopId).single();
+        if (error) {
+          const status = error.status || error.code;
+          if (status === 401 || String(error.message || '').includes('JWT')) {
+            showToast('Session expired. Please scan the QR code again.');
+            logout();
+            return;
+          }
+          throw error;
+        }
+        shopCurrency = shop.currency || 'Rs';
+        shopNameEl.textContent = shop.name;
+        shopCurrencyEl.textContent = shopCurrency;
+        break;
+      } catch (networkError) {
+        if (attempt === 2) throw networkError;
+        await new Promise(r => setTimeout(r, 1000));
       }
-      throw error;
     }
-
-    shopCurrency = shop.currency || 'Rs';
-    shopNameEl.textContent = shop.name;
-    shopCurrencyEl.textContent = shopCurrency;
 
     showApp();
     await loadDashboardData({ initial: true });
@@ -463,18 +475,27 @@ async function loadDashboardData({ initial = false } = {}) {
 
   try {
     const now = new Date().toISOString();
-    const [shopR, salesTodayR, salesYestR, returnsAllR, inv, shiftR] = await Promise.all([
-      supabase.from('shops').select('name, currency').eq('id', shopId).single(),
-      supabase.from('sales').select('total, payment_method, created_at, items').eq('shop_id', shopId)
-        .gte('created_at', getStartOfDay()).lte('created_at', now),
-      supabase.from('sales').select('total').eq('shop_id', shopId)
-        .gte('created_at', getStartOfYesterday()).lte('created_at', getEndOfYesterday()),
-      supabase.from('returns').select('total, payment_method, created_at').eq('shop_id', shopId)
-        .gte('created_at', getStartOfDay()).lte('created_at', now),
-      getInventoryData(),
-      supabase.from('shifts').select('opening_cash, opened_at, closed_at').eq('shop_id', shopId)
-        .order('opened_at', { ascending: false }).limit(1),
-    ]);
+    let shopR, salesTodayR, salesYestR, returnsAllR, inv, shiftR;
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        [shopR, salesTodayR, salesYestR, returnsAllR, inv, shiftR] = await Promise.all([
+          supabase.from('shops').select('name, currency').eq('id', shopId).single(),
+          supabase.from('sales').select('total, payment_method, created_at, items').eq('shop_id', shopId)
+            .gte('created_at', getStartOfDay()).lte('created_at', now),
+          supabase.from('sales').select('total').eq('shop_id', shopId)
+            .gte('created_at', getStartOfYesterday()).lte('created_at', getEndOfYesterday()),
+          supabase.from('returns').select('total, payment_method, created_at').eq('shop_id', shopId)
+            .gte('created_at', getStartOfDay()).lte('created_at', now),
+          getInventoryData(),
+          supabase.from('shifts').select('opening_cash, opened_at, closed_at').eq('shop_id', shopId)
+            .order('opened_at', { ascending: false }).limit(1),
+        ]);
+        break;
+      } catch (networkError) {
+        if (attempt === 2) throw networkError;
+        await new Promise(r => setTimeout(r, 1000));
+      }
+    }
 
     if (shopR.data) {
       shopCurrency = shopR.data.currency || 'Rs';
@@ -505,16 +526,13 @@ async function loadDashboardData({ initial = false } = {}) {
     setText('digital-total', fmt(digitalTotal));
     setText('digital-pct', `${totalSales > 0 ? Math.round((digitalTotal / totalSales) * 100) : 0}% of total`);
 
-    // Best category + top products (from sales.items JSON)
-    const catAgg = {};   // categoryId -> total
+    // Top products (from sales.items JSON)
     const prodAgg = {};   // productId -> { name, qty, total }
     const prodNameById = {};
     let itemsSoldTotal = 0;
     (inv || []).forEach((p) => { prodNameById[p.id] = p.name; });
     salesToday.forEach((s) => {
       parseItems(s.items).forEach((it) => {
-        const cid = it.categoryId || 'unknown';
-        catAgg[cid] = (catAgg[cid] || 0) + parseFloat(it.total || 0);
         if (!prodAgg[it.productId]) prodAgg[it.productId] = { name: it.name || prodNameById[it.productId] || 'Item', qty: 0, total: 0 };
         prodAgg[it.productId].qty += it.quantity || 1;
         prodAgg[it.productId].total += parseFloat(it.total || 0);
@@ -522,13 +540,6 @@ async function loadDashboardData({ initial = false } = {}) {
       });
     });
     setText('items-sold', String(itemsSoldTotal));
-    const categoryName = (cid) => {
-      const c = categoryCache.find((x) => x.id === cid);
-      return c ? c.name : (cid === 'unknown' ? 'Uncategorized' : cid);
-    };
-    const bestCat = Object.entries(catAgg).sort((a, b) => b[1] - a[1])[0];
-    setText('best-category-name', bestCat ? categoryName(bestCat[0]) : '—');
-    setText('best-category-total', bestCat ? fmt(bestCat[1]) : fmt(0));
     const topProds = Object.entries(prodAgg).sort((a, b) => b[1].total - a[1].total).slice(0, 5);
     renderRanked('top-products', topProds.map(([id, v]) => ({ name: v.name, val: `${v.qty} sold · ${fmt(v.total)}` })));
 
@@ -544,14 +555,13 @@ async function loadDashboardData({ initial = false } = {}) {
 
     // Cash vs digital donut
     renderDonut(cashTotal, digitalTotal);
-
-    renderPaymentMethods(salesToday, totalSales);
     renderInventory(inv);
     updateNotifBadge((inv || []).filter((i) => i.isLowStock));
 
     const combined = [
       ...salesToday.map((s) => ({ ...s, type: 'sale' })),
       ...(returnsAllR.data || []).map((r) => ({ ...r, type: 'return' })),
+      ...(salesYestR.data || []).map((s) => ({ ...s, type: 'sale_yesterday' })),
     ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 10);
     renderTransactions(combined);
 
@@ -1142,6 +1152,7 @@ function logout() {
   sessionStorage.removeItem('pairCode');
   shopId = null;
   supabase = null;
+  hideLoading();
   showLoginScreen();
 }
 

@@ -1,34 +1,93 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#020617" id="theme-color-meta">
-<title>POS Dashboard</title>
-<script>
-  // Applied before the stylesheet paints anything, so there's no flash
-  // of the wrong theme on load.
-  (function () {
-    try {
-      var saved = localStorage.getItem('pos-theme');
-      if (saved === 'light') document.documentElement.setAttribute('data-theme', 'light');
-    } catch (e) {}
-  })();
-</script>
-<link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icon-192.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./style.css">
-<link rel="shortcut icon" href="icon-192.png" type="image/x-icon">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#020617" id="theme-color-meta">
+  <title>POS Dashboard</title>
+  <script>
+    // Applied before the stylesheet paints anything, so there's no flash
+    // of the wrong theme on load.
+    (function () {
+      try {
+        var saved = localStorage.getItem('pos-theme');
+        if (saved === 'light') document.documentElement.setAttribute('data-theme', 'light');
+      } catch (e) { }
+    })();
+  </script>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="./style.css">
+  <link rel="shortcut icon" href="icon-192.png" type="image/x-icon">
 </head>
+
 <body>
 
-  <!-- Loading overlay -->
-  <div id="loading-overlay" class="loading-overlay" hidden>
-    <div class="spinner" aria-hidden="true"></div>
-    <p>Loading…</p>
+  <!-- Loading skeleton -->
+  <div id="loading-overlay" class="loading-skeleton" hidden>
+    <div class="skeleton-screen">
+      <header class="skeleton-topbar">
+        <div class="skeleton-line w40"></div>
+        <div class="skeleton-line w60"></div>
+        <div class="skeleton-actions">
+          <div class="skeleton-circle"></div>
+          <div class="skeleton-circle"></div>
+          <div class="skeleton-circle"></div>
+        </div>
+      </header>
+      <div class="skeleton-feed">
+        <div class="skeleton-card">
+          <div class="skeleton-line w30"></div>
+          <div class="skeleton-line w60 mt"></div>
+          <div class="skeleton-line w20 mt"></div>
+        </div>
+        <div class="skeleton-card">
+          <div class="skeleton-line w40"></div>
+          <div class="skeleton-line w50 mt"></div>
+          <div class="skeleton-line w40 mt"></div>
+        </div>
+        <div class="skeleton-grid">
+          <div class="skeleton-card">
+            <div class="skeleton-line w30"></div>
+            <div class="skeleton-line w50 mt"></div>
+          </div>
+          <div class="skeleton-card">
+            <div class="skeleton-line w30"></div>
+            <div class="skeleton-line w50 mt"></div>
+          </div>
+        </div>
+        <div class="skeleton-card">
+          <div class="skeleton-line w40"></div>
+          <div class="skeleton-chart mt"></div>
+        </div>
+        <div class="skeleton-card">
+          <div class="skeleton-line w40"></div>
+          <div class="skeleton-lines mt">
+            <div class="skeleton-line w90"></div>
+            <div class="skeleton-line w70"></div>
+            <div class="skeleton-line w80"></div>
+          </div>
+        </div>
+        <div class="skeleton-card">
+          <div class="skeleton-line w40"></div>
+          <div class="skeleton-chart mt"></div>
+        </div>
+        <div class="skeleton-card">
+          <div class="skeleton-line w40"></div>
+          <div class="skeleton-lines mt">
+            <div class="skeleton-line w100"></div>
+            <div class="skeleton-line w100"></div>
+            <div class="skeleton-line w100"></div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Offline banner -->
@@ -38,23 +97,37 @@
   </div>
 
   <!-- ===================== LOGIN / PAIRING ===================== -->
-  <main id="login-screen" class="screen login-screen">
-    <button id="theme-toggle-login" class="icon-btn theme-toggle-floating" type="button" aria-label="Switch to light theme" aria-pressed="false"></button>
+  <main id="login-screen" class="screen login-screen" hidden>
+    <button id="theme-toggle-login" class="icon-btn theme-toggle-floating" type="button"
+      aria-label="Switch to light theme" aria-pressed="false"></button>
 
     <div class="brand">
       <div class="brand-mark" aria-hidden="true">
-        <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h18v10H3z"/><path d="M3 11h18"/><path d="M7 15h4"/></svg>
+        <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 7h18v10H3z" />
+          <path d="M3 11h18" />
+          <path d="M7 15h4" />
+        </svg>
       </div>
-      <h1>POS Dashboard</h1>
-      <p class="brand-sub">Pair with your till to see live sales, stock and products.</p>
+      <div>
+        <h1>POS Dashboard</h1>
+        <p class="brand-sub">Pair with your till to see live sales, stock and products.</p>
+      </div>
     </div>
 
-    <div class="card pairing-card">
+    <div class="pairing-body">
       <div id="scan-view" class="scan-view">
         <div id="scan-frame" class="scan-frame">
           <video id="scan-video" playsinline muted></video>
           <div class="scan-placeholder" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8a2 2 0 0 1 2-2h1.5l1-1.5A1 1 0 0 1 7.3 4h9.4a1 1 0 0 1 .8.4l1 1.6H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="4"/><path d="m3 3 18 18"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round">
+              <path
+                d="M2 8a2 2 0 0 1 2-2h1.5l1-1.5A1 1 0 0 1 7.3 4h9.4a1 1 0 0 1 .8.4l1 1.6H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2z" />
+              <circle cx="12" cy="13" r="4" />
+              <path d="m3 3 18 18" />
+            </svg>
             <span>Camera is off</span>
           </div>
           <div class="scan-reticle" aria-hidden="true">
@@ -73,8 +146,8 @@
 
       <form id="manual-pair-form" class="manual-pair">
         <label for="pair-code">Pairing code</label>
-        <input id="pair-code" name="pair-code" inputmode="text" autocomplete="off"
-               placeholder="e.g. K7Q2-9M3P" maxlength="9">
+        <input id="pair-code" name="pair-code" inputmode="text" autocomplete="off" placeholder="e.g. K7Q2-9M3P"
+          maxlength="9">
         <button type="submit" class="btn btn-primary">Connect</button>
       </form>
 
@@ -99,27 +172,55 @@
       </div>
       <div class="topbar-actions">
         <button id="notif-btn" class="icon-btn" type="button" aria-label="Alerts">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+            <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+          </svg>
           <span id="notif-badge" class="notif-badge" hidden>0</span>
         </button>
-        <button id="theme-toggle" class="icon-btn" type="button" aria-label="Switch to light theme" aria-pressed="false"></button>
+        <button id="theme-toggle" class="icon-btn" type="button" aria-label="Switch to light theme"
+          aria-pressed="false"></button>
         <button id="logout-btn" class="icon-btn" type="button" aria-label="Log out">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            <path d="m16 17 5-5-5-5" />
+            <path d="M21 12H9" />
+          </svg>
         </button>
       </div>
     </header>
 
     <nav class="tabbar" role="tablist">
       <button id="tab-dashboard" class="tab active" type="button" role="tab" aria-selected="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15v3"/><path d="M12 10v8"/><path d="M17 6v12"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+          stroke-linejoin="round">
+          <path d="M3 3v18h18" />
+          <path d="M7 15v3" />
+          <path d="M12 10v8" />
+          <path d="M17 6v12" />
+        </svg>
         Dashboard
       </button>
       <button id="tab-products" class="tab" type="button" role="tab" aria-selected="false">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="M3.3 7 12 12l8.7-5"/><path d="M12 22V12"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+          stroke-linejoin="round">
+          <path d="m7.5 4.27 9 5.15" />
+          <path
+            d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
+          <path d="M3.3 7 12 12l8.7-5" />
+          <path d="M12 22V12" />
+        </svg>
         Products
       </button>
       <button id="tab-purchases" class="tab" type="button" role="tab" aria-selected="false">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+          stroke-linejoin="round">
+          <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+          <path d="M3 6h18" />
+          <path d="M16 10a4 4 0 0 1-8 0" />
+        </svg>
         Purchases
       </button>
     </nav>
@@ -138,7 +239,11 @@
           <span class="sales-amount" id="sales-total">0.00</span>
         </div>
         <div class="delta-row" id="sales-change-row">
-          <svg id="sales-change-arrow" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="m5 12 7-7 7 7"/></svg>
+          <svg id="sales-change-arrow" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor"
+            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 19V5" />
+            <path d="m5 12 7-7 7 7" />
+          </svg>
           <span id="sales-change" class="sub-value change">0%</span>
           <span class="sub-label">vs yesterday</span>
         </div>
@@ -185,37 +290,22 @@
       </section>
 
       <!-- Best category + Top products -->
-      <section class="card widget grid-2">
-        <div>
-          <h2 class="widget-title">Best Category</h2>
-          <div class="sales-amount sm" id="best-category-name">—</div>
-          <p class="muted-xs" id="best-category-total">0.00</p>
-        </div>
-        <div>
-          <h2 class="widget-title">Top Products</h2>
-          <ol id="top-products" class="ranked-list">
-            <li class="empty-state">No sales yet</li>
-          </ol>
-        </div>
+      <section class="card widget">
+        <h2 class="widget-title">Top Products</h2>
+        <ol id="top-products" class="ranked-list">
+          <li class="empty-state">No sales yet</li>
+        </ol>
       </section>
 
       <!-- Cash vs Digital -->
       <section class="card widget">
-        <h2 class="widget-title">Cash vs Digital</h2>
+        <h2 class="widget-title">Payments</h2>
         <div class="donut-wrap">
           <div id="cash-digital-donut" class="donut"></div>
           <div class="donut-legend">
             <div><span class="dot cash"></span>Cash <strong id="donut-cash">0.00</strong></div>
             <div><span class="dot digital"></span>Digital <strong id="donut-digital">0.00</strong></div>
           </div>
-        </div>
-      </section>
-
-      <!-- Payment methods -->
-      <section class="card widget">
-        <h2 class="widget-title">Payment Methods</h2>
-        <div id="payment-method" class="payment-methods">
-          <p class="empty-state">No sales yet today</p>
         </div>
       </section>
 
@@ -256,7 +346,8 @@
         <button id="add-purchase-btn" class="btn btn-primary sm" type="button">+ Add</button>
       </div>
       <div id="purchase-list" class="purchase-list"></div>
-      <p id="purchase-empty" class="empty-state" style="text-align:center;margin-top:2rem;">No items in purchase todo</p>
+      <p id="purchase-empty" class="empty-state" style="text-align:center;margin-top:2rem;">No items in purchase todo
+      </p>
     </section>
 
   </div>
@@ -285,4 +376,5 @@
     }
   </script>
 </body>
+
 </html>
