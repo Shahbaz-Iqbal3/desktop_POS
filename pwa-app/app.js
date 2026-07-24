@@ -135,7 +135,7 @@ async function sendSubscriptionToBackend(subscription) {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${session?.access_token || ''}`
       },
-      body: JSON.stringify({ subscription: subscription.toJSON() })
+      body: JSON.stringify({ shopId, subscription: subscription.toJSON() })
     });
   } catch (err) {
     console.error('Failed to send push subscription:', err);
@@ -247,6 +247,18 @@ function init() {
   el('purchase-search').addEventListener('input', (e) => renderPurchaseList(e.target.value));
   el('add-purchase-btn').addEventListener('click', openAddPurchaseModal);
   notifBtn.addEventListener('click', openNotifModal);
+  const refreshBtn = el('refresh-btn');
+  if (refreshBtn) {
+    refreshBtn.addEventListener('click', () => {
+      loadDashboardData();
+      showToast('Refreshing…');
+    });
+  }
+
+  window.addEventListener('beforeunload', (e) => {
+    e.preventDefault();
+    e.returnValue = '';
+  });
   logoutBtn.addEventListener('click', logout);
 
   // Modal close
