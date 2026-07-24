@@ -1,5 +1,5 @@
 // Service Worker for POS Dashboard
-const CACHE_NAME = 'pos-dashboard-cache-v4';
+const CACHE_NAME = 'pos-dashboard-cache-v1.0.0';
 const APP_SHELL = [
   './',
   './index.html',
