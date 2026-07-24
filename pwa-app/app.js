@@ -300,7 +300,7 @@ function init() {
     return;
   }
 
-  const storedShopId = sessionStorage.getItem('shopId');
+  const storedShopId = localStorage.getItem('shopId');
   if (storedShopId) {
     showLoading();
     shopId = storedShopId;
@@ -321,7 +321,7 @@ function init() {
       })
       .catch(() => {
         hideLoading();
-        sessionStorage.removeItem('shopId');
+        localStorage.removeItem('shopId');
         showLoginScreen();
       });
   } else {
@@ -447,7 +447,7 @@ async function handleManualPair(code) {
     if (error) throw error;
     hideLoading();
     shopId = result.shop.id;
-    sessionStorage.setItem('shopId', shopId);
+    localStorage.setItem('shopId', shopId);
     initializeApp();
     initPushNotifications();
     const status = await checkPushSubscription();
@@ -476,7 +476,7 @@ function hidePairError() {
 // ============================================================
 function connect(id, code) {
   shopId = id;
-  sessionStorage.setItem('shopId', id);
+  localStorage.setItem('shopId', id);
   if (code) sessionStorage.setItem('pairCode', code);
   hidePairError();
   initializeApp();
@@ -1198,7 +1198,7 @@ function showToast(message) {
 function logout() {
   teardownRealtimeSubscriptions();
   if (pollTimer) clearInterval(pollTimer);
-  sessionStorage.removeItem('shopId');
+  localStorage.removeItem('shopId');
   sessionStorage.removeItem('accessToken');
   sessionStorage.removeItem('pairCode');
   shopId = null;
