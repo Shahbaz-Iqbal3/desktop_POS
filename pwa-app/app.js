@@ -128,11 +128,12 @@ function urlBase64ToUint8Array(base64String) {
 
 async function sendSubscriptionToBackend(subscription) {
   try {
+    const { data: { session } } = await supabase.auth.getSession();
     await fetch(PUSH_SUBSCRIBE_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${supabase.auth.getSession().then(s => s.data.session?.access_token)}`
+        'Authorization': `Bearer ${session?.access_token || ''}`
       },
       body: JSON.stringify({ subscription: subscription.toJSON() })
     });
@@ -146,6 +147,7 @@ let pollTimer = null;
 let realtimeChannels = [];
 let productCache = [];      // local mirror for stock-movement category lookup
 let categoryCache = [];
+let lastHourlyBuckets = new Array(15).fill(0); // re-rendered when the dashboard tab regains visibility
 
 // camera scanning state
 let scanStream = null;
@@ -175,6 +177,9 @@ const shopNameEl = el('shop-name');
 const shopCurrencyEl = el('shop-currency');
 const lastUpdatedEl = el('last-updated');
 const logoutBtn = el('logout-btn');
+const notifBtn = el('notif-btn');
+const notifBadge = el('notif-badge');
+let lastLowStockItems = [];
 
 // ============================================================
 // Theme (dark default, optional light) — persisted in localStorage
@@ -241,6 +246,7 @@ function init() {
   el('product-search').addEventListener('input', (e) => renderProductList(e.target.value));
   el('purchase-search').addEventListener('input', (e) => renderPurchaseList(e.target.value));
   el('add-purchase-btn').addEventListener('click', openAddPurchaseModal);
+  notifBtn.addEventListener('click', openNotifModal);
 
   // Modal close
   el('modal-root').addEventListener('click', (e) => {
@@ -298,8 +304,12 @@ function switchTab(tab) {
   el('tab-dashboard').setAttribute('aria-selected', String(isDash));
   el('tab-products').setAttribute('aria-selected', String(isProd));
   el('tab-purchases').setAttribute('aria-selected', String(isPur));
+  setText('topbar-eyebrow', isDash ? 'Dashboard' : isProd ? 'Products' : 'Purchases');
   if (isProd) loadProducts();
   if (isPur) renderPurchaseList(el('purchase-search').value);
+  // The chart measures its container's width; while a tab is `hidden` that
+  // width is 0, so redraw it once the dashboard is actually visible again.
+  if (isDash) renderHourlyChart(lastHourlyBuckets);
 }
 
 // ============================================================
@@ -453,14 +463,12 @@ async function loadDashboardData({ initial = false } = {}) {
 
   try {
     const now = new Date().toISOString();
-    const [shopR, salesTodayR, salesYestR, salesAllR, returnsAllR, inv, shiftR] = await Promise.all([
+    const [shopR, salesTodayR, salesYestR, returnsAllR, inv, shiftR] = await Promise.all([
       supabase.from('shops').select('name, currency').eq('id', shopId).single(),
       supabase.from('sales').select('total, payment_method, created_at, items').eq('shop_id', shopId)
         .gte('created_at', getStartOfDay()).lte('created_at', now),
       supabase.from('sales').select('total').eq('shop_id', shopId)
         .gte('created_at', getStartOfYesterday()).lte('created_at', getEndOfYesterday()),
-      supabase.from('sales').select('total, payment_method, created_at, items').eq('shop_id', shopId)
-        .gte('created_at', getStartOfDay()).lte('created_at', now),
       supabase.from('returns').select('total, payment_method, created_at').eq('shop_id', shopId)
         .gte('created_at', getStartOfDay()).lte('created_at', now),
       getInventoryData(),
@@ -483,6 +491,7 @@ async function loadDashboardData({ initial = false } = {}) {
     setText('sales-count', String(salesToday.length));
     setText('sales-change', fmtPct(salesChange));
     el('sales-change').className = 'sub-value change ' + (salesChange >= 0 ? 'positive' : 'negative');
+    el('sales-change-row').className = 'delta-row ' + (salesChange >= 0 ? 'positive' : 'negative');
 
     // Cash in till + digital
     const cashSales = salesToday.filter((s) => (s.payment_method || 'cash').toLowerCase() === 'cash');
@@ -500,6 +509,7 @@ async function loadDashboardData({ initial = false } = {}) {
     const catAgg = {};   // categoryId -> total
     const prodAgg = {};   // productId -> { name, qty, total }
     const prodNameById = {};
+    let itemsSoldTotal = 0;
     (inv || []).forEach((p) => { prodNameById[p.id] = p.name; });
     salesToday.forEach((s) => {
       parseItems(s.items).forEach((it) => {
@@ -508,8 +518,10 @@ async function loadDashboardData({ initial = false } = {}) {
         if (!prodAgg[it.productId]) prodAgg[it.productId] = { name: it.name || prodNameById[it.productId] || 'Item', qty: 0, total: 0 };
         prodAgg[it.productId].qty += it.quantity || 1;
         prodAgg[it.productId].total += parseFloat(it.total || 0);
+        itemsSoldTotal += it.quantity || 1;
       });
     });
+    setText('items-sold', String(itemsSoldTotal));
     const categoryName = (cid) => {
       const c = categoryCache.find((x) => x.id === cid);
       return c ? c.name : (cid === 'unknown' ? 'Uncategorized' : cid);
@@ -528,16 +540,18 @@ async function loadDashboardData({ initial = false } = {}) {
       if (idx >= 0 && idx < 15) buckets[idx] += parseFloat(s.total);
     });
     renderHourlyChart(buckets);
+    lastHourlyBuckets = buckets;
 
     // Cash vs digital donut
     renderDonut(cashTotal, digitalTotal);
 
     renderPaymentMethods(salesToday, totalSales);
     renderInventory(inv);
+    updateNotifBadge((inv || []).filter((i) => i.isLowStock));
 
     const combined = [
-      ...salesAllR.data.map((s) => ({ ...s, type: 'sale' })),
-      ...returnsAllR.data.map((r) => ({ ...r, type: 'return' })),
+      ...salesToday.map((s) => ({ ...s, type: 'sale' })),
+      ...(returnsAllR.data || []).map((r) => ({ ...r, type: 'return' })),
     ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 10);
     renderTransactions(combined);
 
@@ -982,6 +996,36 @@ function renderTransactions(transactions) {
   });
 }
 
+function updateNotifBadge(lowStockItems) {
+  lastLowStockItems = lowStockItems || [];
+  if (lastLowStockItems.length > 0) {
+    notifBadge.hidden = false;
+    notifBadge.textContent = lastLowStockItems.length > 9 ? '9+' : String(lastLowStockItems.length);
+  } else {
+    notifBadge.hidden = true;
+  }
+}
+
+function openNotifModal() {
+  if (lastLowStockItems.length === 0) {
+    openModal(`
+      <h3>Alerts</h3>
+      <p class="muted-xs">No alerts right now — every product is above its low-stock threshold.</p>
+      <div class="modal-actions"><button class="btn btn-primary" data-close>Close</button></div>
+    `);
+    return;
+  }
+  const rows = [...lastLowStockItems]
+    .sort((a, b) => a.currentStock - b.currentStock)
+    .map((i) => `<div class="inventory-item"><span class="item-name">${escapeHtml(i.name)}</span><span class="item-stock low-stock">${i.currentStock} left</span></div>`)
+    .join('');
+  openModal(`
+    <h3>Low Stock Alerts</h3>
+    <div class="inventory-list">${rows}</div>
+    <div class="modal-actions"><button class="btn btn-primary" data-close>Close</button></div>
+  `);
+}
+
 function renderRanked(id, items) {
   const box = el(id);
   if (!items || items.length === 0) { box.innerHTML = '<li class="empty-state">No sales yet</li>'; return; }
@@ -994,16 +1038,35 @@ function renderRanked(id, items) {
 }
 
 function renderHourlyChart(buckets) {
-  const max = Math.max(1, ...buckets);
   const box = el('hourly-chart');
-  box.innerHTML = '';
-  buckets.forEach((v) => {
-    const h = Math.round((v / max) * 100);
-    const col = document.createElement('div');
-    col.className = 'bar-col';
-    col.innerHTML = `<div class="bar ${v === 0 ? 'empty' : ''}" style="height:${h}%"></div>`;
-    box.appendChild(col);
+  const w = box.clientWidth || 300;
+  const h = 110;
+  const max = Math.max(1, ...buckets);
+  const n = buckets.length;
+  const stepX = n > 1 ? w / (n - 1) : w;
+  const pad = 6; // keep the line off the very top/bottom edge
+
+  const points = buckets.map((v, i) => {
+    const x = i * stepX;
+    const y = pad + (1 - v / max) * (h - pad * 2);
+    return [x, y];
   });
+
+  const linePath = points.map(([x, y], i) => `${i === 0 ? 'M' : 'L'}${x.toFixed(1)},${y.toFixed(1)}`).join(' ');
+  const areaPath = `${linePath} L${points[points.length - 1][0].toFixed(1)},${h} L0,${h} Z`;
+  const gradId = 'trendFill';
+
+  box.innerHTML = `
+    <svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="${gradId}" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" style="stop-color:var(--teal);stop-opacity:0.35"/>
+          <stop offset="100%" style="stop-color:var(--teal);stop-opacity:0"/>
+        </linearGradient>
+      </defs>
+      <path d="${areaPath}" fill="url(#${gradId})" stroke="none"></path>
+      <path class="trend-line" d="${linePath}"></path>
+    </svg>`;
 }
 
 function renderDonut(cash, digital) {

@@ -90,6 +90,7 @@
 
     <header class="topbar">
       <div class="topbar-main">
+        <span class="topbar-eyebrow" id="topbar-eyebrow">Dashboard</span>
         <h1 id="shop-name">Shop name</h1>
         <div class="topbar-meta">
           <span class="live-dot" aria-hidden="true"></span>
@@ -97,6 +98,10 @@
         </div>
       </div>
       <div class="topbar-actions">
+        <button id="notif-btn" class="icon-btn" type="button" aria-label="Alerts">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+          <span id="notif-badge" class="notif-badge" hidden>0</span>
+        </button>
         <button id="theme-toggle" class="icon-btn" type="button" aria-label="Switch to light theme" aria-pressed="false"></button>
         <button id="logout-btn" class="icon-btn" type="button" aria-label="Log out">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>
@@ -122,33 +127,61 @@
     <!-- ---------- DASHBOARD ---------- -->
     <section id="view-dashboard" class="feed" role="tabpanel">
 
-      <!-- Today's sales + Cash in Till + Digital -->
-      <section class="card widget grid-2">
-        <div>
+      <!-- Today's Sales -->
+      <section class="card widget">
+        <div class="hero-header">
           <h2 class="widget-title">Today's Sales</h2>
-          <div class="sales-hero compact">
-            <span class="currency-tag" id="shop-currency">Rs</span>
-            <span class="sales-amount" id="sales-total">0.00</span>
+          <span class="live-dot" aria-hidden="true"></span>
+        </div>
+        <div class="sales-hero">
+          <span class="currency-tag" id="shop-currency">Rs</span>
+          <span class="sales-amount" id="sales-total">0.00</span>
+        </div>
+        <div class="delta-row" id="sales-change-row">
+          <svg id="sales-change-arrow" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="m5 12 7-7 7 7"/></svg>
+          <span id="sales-change" class="sub-value change">0%</span>
+          <span class="sub-label">vs yesterday</span>
+        </div>
+      </section>
+
+      <!-- Cash Position -->
+      <section class="card widget">
+        <h2 class="widget-title">Cash Position</h2>
+        <div class="status-list">
+          <div class="status-row">
+            <div>
+              <div class="status-label">Cash in Till</div>
+              <div class="muted-xs" id="cash-in-till-sub">opening 0.00</div>
+            </div>
+            <span class="status-amount positive" id="cash-in-till">0.00</span>
           </div>
-          <div class="sales-sub compact">
-            <div class="sub-stat">
-              <span class="sub-value" id="sales-count">0</span>
-              <span class="sub-label">transactions</span>
+          <div class="status-row">
+            <div>
+              <div class="status-label">Digital</div>
+              <div class="muted-xs" id="digital-pct">0% of total</div>
             </div>
-            <div class="sub-stat">
-              <span class="sub-value change" id="sales-change">0%</span>
-              <span class="sub-label">vs. yesterday</span>
-            </div>
+            <span class="status-amount positive" id="digital-total">0.00</span>
           </div>
         </div>
-        <div>
-          <h2 class="widget-title">Cash in Till</h2>
-          <div class="sales-amount sm" id="cash-in-till">0.00</div>
-          <p class="muted-xs" id="cash-in-till-sub">opening 0.00</p>
-          <h2 class="widget-title mt">Digital</h2>
-          <div class="sales-amount sm" id="digital-total">0.00</div>
-          <p class="muted-xs" id="digital-pct">0% of total</p>
-        </div>
+      </section>
+
+      <!-- Bills / Items Sold -->
+      <div class="grid-2">
+        <section class="card widget stat-mini">
+          <h2 class="widget-title">Bills</h2>
+          <div class="sales-amount sm" id="sales-count">0</div>
+        </section>
+        <section class="card widget stat-mini">
+          <h2 class="widget-title">Items Sold</h2>
+          <div class="sales-amount sm" id="items-sold">0</div>
+        </section>
+      </div>
+
+      <!-- Hourly trend -->
+      <section class="card widget">
+        <h2 class="widget-title">Hourly Trend</h2>
+        <div id="hourly-chart" class="trend-chart"></div>
+        <div class="chart-axis"><span>08:00</span><span>14:00</span><span>20:00</span></div>
       </section>
 
       <!-- Best category + Top products -->
@@ -164,13 +197,6 @@
             <li class="empty-state">No sales yet</li>
           </ol>
         </div>
-      </section>
-
-      <!-- Hourly sales trend -->
-      <section class="card widget">
-        <h2 class="widget-title">Hourly Sales Trend</h2>
-        <div id="hourly-chart" class="chart-bars"></div>
-        <div class="chart-axis"><span>08:00</span><span>14:00</span><span>20:00</span></div>
       </section>
 
       <!-- Cash vs Digital -->

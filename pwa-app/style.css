@@ -283,6 +283,10 @@ button { font-family: inherit; }
 .topbar-main h1 {
   font-size: 1.2rem; font-weight: 700; color: var(--text);
 }
+.topbar-eyebrow {
+  display: block; font-size: .74rem; font-weight: 600; color: var(--text-soft);
+  margin-bottom: .1rem;
+}
 .topbar-meta {
   display: flex; align-items: center; gap: .4rem;
   margin-top: .3rem; font-size: .78rem; color: var(--text-soft);
@@ -299,6 +303,7 @@ button { font-family: inherit; }
   100% { box-shadow: 0 0 0 0 rgba(45,212,191,0); }
 }
 .icon-btn {
+  position: relative;
   width: 40px; height: 40px; border-radius: 10px; border: 1px solid var(--border);
   background: var(--surface); color: var(--text-soft);
   display: flex; align-items: center; justify-content: center;
@@ -307,6 +312,14 @@ button { font-family: inherit; }
 }
 .icon-btn:active { background: var(--surface-2); transform: scale(0.94); }
 .topbar-actions { display: flex; gap: .5rem; flex: none; }
+.notif-badge {
+  position: absolute; top: -4px; right: -4px;
+  min-width: 16px; height: 16px; padding: 0 3px; border-radius: 8px;
+  background: var(--red); color: #fff;
+  font-size: .62rem; font-weight: 700; line-height: 16px; text-align: center;
+  font-family: var(--font-mono);
+  border: 2px solid var(--bg);
+}
 
 .tabbar {
   display: flex; gap: .25rem;
@@ -353,6 +366,13 @@ button { font-family: inherit; }
 .widget-title-row .widget-title { margin-bottom: 0; }
 
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+.grid-2.widget { gap: .85rem; }
+
+.hero-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: .75rem;
+}
+.hero-header .widget-title { margin-bottom: 0; }
 
 .sales-hero {
   display: flex; align-items: baseline; gap: .4rem;
@@ -365,12 +385,33 @@ button { font-family: inherit; }
   font-variant-numeric: tabular-nums;
 }
 .sales-amount.sm { font-size: 1.4rem; margin-bottom: .15rem; }
-.sales-sub {
-  display: flex; gap: 1.5rem; margin-top: .6rem;
-  padding-top: .6rem; border-top: 1px solid var(--border);
+
+.delta-row {
+  display: flex; align-items: center; gap: .3rem; margin-top: .5rem;
 }
-.sales-sub.compact { gap: 1.25rem; }
-.sub-stat { display: flex; flex-direction: column; }
+.delta-row .sub-value { font-size: .95rem; }
+.delta-row .sub-label { font-size: .8rem; color: var(--text-soft); }
+.delta-row #sales-change-arrow { color: var(--green); flex: none; transition: transform .15s ease, color .15s ease; }
+.delta-row.negative #sales-change-arrow { color: var(--red); transform: rotate(180deg); }
+
+/* stat pair cards (Bills / Items Sold) */
+.stat-mini { text-align: left; }
+.stat-mini .sales-amount.sm { font-size: 1.6rem; margin-bottom: 0; }
+
+/* cash position list */
+.status-list { display: flex; flex-direction: column; gap: .9rem; }
+.status-row {
+  display: flex; align-items: center; justify-content: space-between; gap: .75rem;
+  padding-bottom: .9rem; border-bottom: 1px solid var(--border);
+}
+.status-row:last-child { padding-bottom: 0; border-bottom: none; }
+.status-label { font-size: .92rem; font-weight: 600; color: var(--text); }
+.status-amount {
+  font-family: var(--font-mono); font-weight: 600; font-size: 1rem;
+  font-variant-numeric: tabular-nums;
+}
+.status-amount.positive { color: var(--green); }
+.status-amount.negative { color: var(--red); }
 .sub-value {
   font-family: var(--font-mono); font-size: 1.1rem; font-weight: 600;
   font-variant-numeric: tabular-nums;
@@ -452,13 +493,13 @@ button { font-family: inherit; }
 .ranked-list .rp-val { font-family: var(--font-mono); color: var(--text-soft); font-size: .8rem; }
 
 /* charts */
-.chart-bars { display: flex; align-items: flex-end; gap: 4px; height: 110px; padding-top: .5rem; }
-.chart-bars .bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
-.chart-bars .bar {
-  width: 100%; max-width: 22px; background: linear-gradient(180deg, var(--teal), rgba(20,184,166,0.4));
-  border-radius: 4px 4px 0 0; min-height: 2px; transition: height .3s ease;
+.trend-chart { width: 100%; height: 110px; }
+.trend-chart svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.trend-chart .trend-line {
+  fill: none; stroke: var(--teal); stroke-width: 2.5;
+  stroke-linecap: round; stroke-linejoin: round;
 }
-.chart-bars .bar.empty { background: var(--surface-2); }
+.trend-chart .trend-dot { fill: var(--teal); }
 .chart-axis { display: flex; justify-content: space-between; font-size: .68rem; color: var(--text-mute); margin-top: .35rem; }
 
 .donut-wrap { display: flex; align-items: center; gap: 1.25rem; }
@@ -547,8 +588,5 @@ button { font-family: inherit; }
   .feed { padding-top: 1.75rem; }
 }
 
-/* ---------- motion & focus preferences ---------- */
-@media (prefers-reduced-motion: reduce) {
-  .spinner, .live-dot, .scan-line { animation: none; }
-}
+
 :focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
